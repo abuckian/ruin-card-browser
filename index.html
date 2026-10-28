@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- variety-batch2 -->
+<!-- face-batch2-fix-ruin-cards -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#0e0c0a" />
@@ -255,7 +255,7 @@ body {
   </div>
 </div>
 
-<script src="cards.js"></script>
+<script src="cards.js?v=d8a3b7d"></script>
 <script>
 (function () {
   const grid = document.getElementById('grid');
@@ -275,7 +275,7 @@ body {
     return (v === null || v === undefined || v === '') ? '—' : String(v);
   }
 
-  const cards = Array.isArray(window.CARDS) ? window.CARDS : [];
+  const cards = Array.isArray(window.RUIN_CARDS) ? window.RUIN_CARDS : (Array.isArray(window.CARDS) ? window.CARDS : []);
   const byId = new Map(cards.map(c => [c.id, c]));
 
   function matches(c, q, set, type) {
