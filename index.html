@@ -192,6 +192,18 @@ body {
   border: 1px solid var(--border);
   background: #15120e; color: var(--text);
 }
+.kw-defs {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kw-def {
+  font-size: .78rem;
+  line-height: 1.35;
+  color: var(--muted, #a89a88);
+}
+.kw-def b { color: var(--text); font-weight: 600; }
 .rules { white-space: pre-wrap; line-height: 1.45; margin: 12px 0; font-size: .95rem; }
 .flavor {
   margin: 14px 0 0; font-style: italic;
@@ -255,7 +267,7 @@ body {
   </div>
 </div>
 
-<script src="cards-abbadon.js?v=ecc-kw-only"></script>
+<script src="cards-abbadon.js?v=kw-glossary"></script>
 <script>
 (function () {
   const grid = document.getElementById('grid');
@@ -339,6 +351,19 @@ body {
     document.getElementById('mDeploy').textContent = dash(c.deploy);
     document.getElementById('mWage').textContent = dash(c.wage);
     document.getElementById('mMight').textContent = dash(c.might);
+    const KW_DEFS = {
+      Ecclesiastus: 'Your first Rite each turn costs 1 less Deploy (min 0).',
+      Tithe: 'When you pay your full wage bill, gain an extra printed effect.',
+      Canopy: 'Skip your Timefall pulse choice as printed (charge / timing on the card).',
+      'Chain of Command': 'Martialus that share Deploy cost buff each other as printed.',
+      Annex: 'Steal, tax, convert, or weaken enemy Martialus / Specie while Cohesion high.',
+      Spire: 'Pulse control / scry; may twist Timefall as printed.',
+      Raid: 'Attack effects: steal Specie or ignore limits as printed.',
+      Sandfall: 'Age and/or Life pressure as printed.',
+      'Blood Dune': 'When a Soul dies, next Martialus costs less Deploy as printed.',
+      Uprising: 'If opponent missed wages, your Raid / Martialus get extra pain as printed.',
+      Martyr: 'Dead-card zone. Optional Martyr: line fires when a Martialus dies.'
+    };
     const kw = document.getElementById('mKw');
     kw.innerHTML = '';
     (c.keywords || []).forEach(k => {
@@ -347,6 +372,21 @@ body {
       s.textContent = k;
       kw.appendChild(s);
     });
+    const defs = (c.keywords || []).filter(k => KW_DEFS[k]);
+    if (defs.length) {
+      const box = document.createElement('div');
+      box.className = 'kw-defs';
+      defs.forEach(k => {
+        const d = document.createElement('div');
+        d.className = 'kw-def';
+        const b = document.createElement('b');
+        b.textContent = k;
+        d.appendChild(b);
+        d.appendChild(document.createTextNode(' — ' + KW_DEFS[k]));
+        box.appendChild(d);
+      });
+      kw.appendChild(box);
+    }
     document.getElementById('mText').textContent = c.text || '';
     const fl = document.getElementById('mFlavor');
     fl.textContent = c.flavor || '';
