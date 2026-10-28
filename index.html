@@ -267,7 +267,7 @@ body {
   </div>
 </div>
 
-<script src="cards-abbadon.js?v=kw-glossary"></script>
+<script src="cards-abbadon.js?v=shield-spectacle"></script>
 <script>
 (function () {
   const grid = document.getElementById('grid');
@@ -280,6 +280,7 @@ body {
   const closeBtn = document.getElementById('closeBtn');
 
   function thumbUrl(id) {
+    if (id === 'COL-MAR-001') return 'thumbs/r11/COL-MAR-001.jpg?v=spectacle';
     if (id === 'COL-LED-002') return 'thumbs/r2/COL-LED-002.jpg?v=1';
     if (id === 'COL-LED-005') return 'thumbs/r2/COL-LED-005.jpg?v=mustafar';
     if (id === 'COL-LED-006') return 'thumbs/r3/COL-LED-006.jpg?v=pre';
