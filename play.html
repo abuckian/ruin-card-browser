@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#0e0c0a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <title>RUIN — Play</title>
-<link rel="icon" type="image/svg+xml" href="play/icon.svg?v=20261114thand">
-<link rel="apple-touch-icon" href="play/apple-touch-icon.png?v=20261114thand">
+<link rel="icon" type="image/svg+xml" href="play/icon.svg?v=20261114tword">
+<link rel="apple-touch-icon" href="play/apple-touch-icon.png?v=20261114tword">
 <style>
 :root {
   --bg:#0e0c0a; --elev:#1a1612; --elev2:#241f18; --border:#3a3228;
@@ -108,9 +108,17 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 #prompt{padding:3px 10px;background:rgba(12,12,8,.9);border-top:1px solid rgba(200,230,70,.22);border-bottom:1px solid rgba(200,230,70,.22);flex:0 0 auto}
 #prompt .q{font-weight:700;margin:0 0 3px;font-size:.8rem}
 #prompt .btn{min-height:36px;padding:6px 12px}
-#handWrap{flex:0 0 auto;width:100%;min-width:0;height:calc(200px + var(--safe-bottom));padding-bottom:var(--safe-bottom);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin;background:rgba(8,8,6,.92)}
+#handRail{position:relative;flex:0 0 auto;width:100%;min-width:0;height:calc(200px + var(--safe-bottom));background:rgba(8,8,6,.92)}
+#handWrap{height:100%;width:100%;padding-bottom:var(--safe-bottom);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin}
 #handWrap::-webkit-scrollbar{height:5px}
 #handWrap::-webkit-scrollbar-thumb{background:#c9e84a;border-radius:4px}
+#handHint{position:absolute;right:0;top:0;bottom:var(--safe-bottom);width:64px;pointer-events:none;z-index:25;display:none;flex-direction:column;align-items:flex-end;justify-content:flex-start;padding:8px 8px 12px;background:linear-gradient(to right, rgba(8,8,6,0) 0%, rgba(8,8,6,.75) 46%, rgba(8,8,6,.95) 100%);opacity:1;transition:opacity .2s, background .2s}
+#handHint.on{display:flex}
+#handHint.at-end{background:none;width:auto}
+#handHint.at-end .hand-chev{opacity:0;visibility:hidden}
+#handCount{font-size:.68rem;font-weight:800;letter-spacing:.02em;color:#e8f56a;background:rgba(8,8,6,.88);border:1px solid rgba(200,230,70,.4);border-radius:999px;padding:2px 8px;box-shadow:0 2px 8px rgba(0,0,0,.45);white-space:nowrap}
+#handHint .hand-chev{margin-top:auto;width:22px;height:22px;color:#e8f56a;filter:drop-shadow(0 0 6px rgba(200,230,70,.55));animation:handChev 1.2s ease-in-out infinite}
+@keyframes handChev{0%,100%{transform:translateX(0);opacity:.85}50%{transform:translateX(4px);opacity:1}}
 #hand{display:flex;flex-direction:row;align-items:flex-end;height:200px;width:max-content;min-width:100%;padding:8px 14px;box-sizing:border-box;position:relative}
 #handWrap.fit #hand{justify-content:center}
 #hand .empty-hand{margin:auto 0;padding:8px}
@@ -297,8 +305,14 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
       </div>
     </div>
   </div>
-  <div id="handWrap">
-    <div id="hand"></div>
+  <div id="handRail">
+    <div id="handWrap">
+      <div id="hand"></div>
+    </div>
+    <div id="handHint" aria-hidden="true">
+      <span id="handCount"></span>
+      <svg class="hand-chev" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.6 4.6 14.8 12 8.6 19.4 10.2 21 18 12 10.2 3z"/></svg>
+    </div>
   </div>
 </div>
 
@@ -309,10 +323,10 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
 
 <div id="tip"></div>
 
-<script src="play/cards.js?v=20261114thand"></script>
-<script src="play/rules.js?v=20261114thand"></script>
-<script src="play/engine.js?v=20261114thand"></script>
-<script src="play/deck.js?v=20261114thand"></script>
-<script src="play/app.js?v=20261114thand"></script>
+<script src="play/cards.js?v=20261114tword"></script>
+<script src="play/rules.js?v=20261114tword"></script>
+<script src="play/engine.js?v=20261114tword"></script>
+<script src="play/deck.js?v=20261114tword"></script>
+<script src="play/app.js?v=20261114tword"></script>
 </body>
 </html>

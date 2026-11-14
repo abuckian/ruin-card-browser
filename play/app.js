@@ -22,7 +22,7 @@
   function shownText(card) { return displayText((card && card.text) || ''); }
 
   const KW = Object.keys(TIPS).sort((a, b) => b.length - a.length);
-  const KW_RE = KW.length ? new RegExp('(' + KW.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi') : null;
+  const KW_RE = KW.length ? new RegExp('\\b(' + KW.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'g') : null;
 
   function linkKeywords(text) {
     const s = String(text || '');
@@ -30,7 +30,7 @@
     let out = '', last = 0;
     s.replace(KW_RE, function (m, _g, i) {
       out += escapeHtml(s.slice(last, i));
-      const key = KW.find((k) => k.toLowerCase() === m.toLowerCase()) || m;
+      const key = m;
       out += '<span class="kw" data-kw="' + escapeAttr(key) + '">' + escapeHtml(m) + '</span>';
       last = i + m.length;
       return m;
@@ -577,6 +577,38 @@
     });
     hand.style.height = '';
     wrap.classList.toggle('fit', cards.length > 0 && hand.scrollWidth <= wrap.clientWidth + 1);
+    bindHandHint();
+    updateHandHint();
+  }
+
+  let handHintBound = false;
+  function bindHandHint() {
+    const wrap = $('handWrap');
+    if (!wrap || handHintBound) return;
+    handHintBound = true;
+    wrap.addEventListener('scroll', updateHandHint, { passive: true });
+  }
+
+  function updateHandHint() {
+    const hand = $('hand');
+    const wrap = $('handWrap');
+    const hint = $('handHint');
+    const count = $('handCount');
+    if (!hand || !wrap || !hint) return;
+    const cards = [...hand.querySelectorAll('.card')];
+    const overflow = cards.length > 0 && wrap.scrollWidth > wrap.clientWidth + 1;
+    hint.classList.toggle('on', overflow);
+    if (!overflow) { hint.classList.remove('at-end'); if (count) count.textContent = ''; return; }
+    const wr = wrap.getBoundingClientRect();
+    let first = 1;
+    for (let i = 0; i < cards.length; i++) {
+      const r = cards[i].getBoundingClientRect();
+      const vis = Math.min(r.right, wr.right) - Math.max(r.left, wr.left);
+      if (vis >= Math.min(r.width, wr.width) * 0.45) { first = i + 1; break; }
+    }
+    if (count) count.textContent = first + ' of ' + cards.length;
+    const atEnd = wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 2;
+    hint.classList.toggle('at-end', atEnd);
   }
 
   function renderLeader(slotId, p, who) {
