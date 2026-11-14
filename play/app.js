@@ -1,4 +1,4 @@
-/* RUIN play UI — Ian vs the sim AI, variant (t), with deck builder. */
+/* RUIN play UI — Ian vs the sim AI, with deck builder. */
 (function () {
   const { Game, GameOver, buildDeck, makeRng, AI, GAME_OPTS } = window.RUIN_PLAY;
   const DECK = window.RUIN_DECK;
@@ -9,6 +9,17 @@
   const $ = (id) => document.getElementById(id);
   const shortName = (n) => (n || '').split(',')[0];
   const artUrl = (card) => (!card || !card.id || card.id === 'TOKEN') ? '' : ('thumbs/' + card.id + '.jpg');
+
+  const DEV_NOTE_RE = /\s*\((?:text says so|name check|reminder|text allows|see (?:code|engine|notes)|dev(?:eloper)? note|todo|fixme)\)/gi;
+  function displayText(text) {
+    return String(text || '')
+      .replace(DEV_NOTE_RE, '')
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/ +([.,;:])/g, '$1')
+      .replace(/[ \t]+\n/g, '\n')
+      .trim();
+  }
+  function shownText(card) { return displayText((card && card.text) || ''); }
 
   const KW = Object.keys(TIPS).sort((a, b) => b.length - a.length);
   const KW_RE = KW.length ? new RegExp('(' + KW.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi') : null;
@@ -201,11 +212,11 @@
       card.might != null ? 'Might ' + card.might : null
     ].filter(Boolean).join(' · ');
     $('cardSheet').innerHTML =
-      (art ? '<img class="art" alt="" src="' + art + '" onerror="this.style.display=\'none\'">' : '') +
+      (art ? '<img class="art" alt="" src="' + art + '" onerror="this.style.opacity=0">' : '') +
       '<h2>' + escapeHtml(card.name) + '</h2>' +
       '<div class="sub" style="margin-top:0">' + escapeHtml(typ + (stats ? ' · ' + stats : '')) + '</div>' +
-      '<div class="txt">' + linkKeywords(card.text || '') + '</div>' +
-      (card.flavor ? '<p class="sub">' + escapeHtml(card.flavor) + '</p>' : '') +
+      '<div class="txt">' + linkKeywords(shownText(card)) + '</div>' +
+      (card.flavor ? '<p class="sub">' + escapeHtml(displayText(card.flavor)) + '</p>' : '') +
       (extraHtml || '') +
       '<button class="btn wide" type="button" id="cardClose">Close</button>';
     $('cardModal').classList.add('on');
@@ -259,9 +270,12 @@
         render();
       }),
       pickBlocks: (G, d, attackers) => new Promise((resolve) => {
+        const live = (attackers || []).filter((a) => a && a.alive);
+        const can = live.some((a) => (d.souls || []).some((b) => !AI.canBlock || AI.canBlock(G, b, a)));
+        if (!live.length || !can) { resolve(new Map()); return; }
         const blocks = new Map();
         let chosenBlocker = null;
-        st.pickSet = { type: 'block', attackers, blocks, get chosenBlocker() { return chosenBlocker; }, set chosenBlocker(v) { chosenBlocker = v; } };
+        st.pickSet = { type: 'block', attackers: live, blocks, get chosenBlocker() { return chosenBlocker; }, set chosenBlocker(v) { chosenBlocker = v; } };
         prompt('Tap a Soul, then the attacker it blocks. Several can gang up. Confirm when done.', [
           { label: 'Confirm blocks', primary: true, fn: () => { st.pickSet = null; resolve(blocks); } }
         ]);
@@ -326,7 +340,7 @@
         const used = [];
         for (const a of acts) {
           const name = a.perm.name || (a.perm.card && a.perm.card.name) || 'Leader';
-          const snippet = (a.perm.card && a.perm.card.text) ? a.perm.card.text.replace(/Enter by end of turn 1\.\s*/i, '') : 'Use ability';
+          const snippet = (a.perm.card && a.perm.card.text) ? displayText(a.perm.card.text).replace(/Enter by end of turn 1\.\s*/i, '') : 'Use ability';
           const ok = await yesNo('Use ' + shortName(name) + '?\n' + snippet);
           if (ok) used.push(a);
         }
@@ -446,19 +460,21 @@
     prompt(title + '. ' + msg, []);
   }
 
-  function gem(kind, value, dmg) {
+  function gem(kind, value, dmg, label) {
     const hurt = (kind === 'might' && dmg) ? ' hurt' : '';
     const mark = (kind === 'might' && dmg) ? '<span class="dmg">' + dmg + '</span>' : '';
     const title = kind === 'cost' ? 'Deploy' : (kind === 'might' ? 'Might' : (kind === 'life' ? 'Life' : 'Wage'));
-    return '<span class="gem ' + kind + hurt + '" title="' + title + '">' + value + mark + '</span>';
+    const lab = (label === '') ? '' : (label != null ? label : ({ might: 'M', wage: 'W', cost: 'D' }[kind] || ''));
+    return '<span class="gem ' + kind + hurt + '" title="' + title + '"><span class="gv">' + value + '</span>' +
+      (lab ? '<span class="gl">' + lab + '</span>' : '') + mark + '</span>';
   }
   function artTag(card, cls) {
     const u = artUrl(card);
     if (!u) return '';
-    return '<img class="' + (cls || 'art') + '" alt="" src="' + u + '" onerror="this.style.display=\'none\'">';
+    return '<img class="' + (cls || 'art') + '" alt="" src="' + u + '" onerror="this.style.opacity=0">';
   }
   function leaderText(card) {
-    return String((card && card.text) || '').replace(/Enter by end of turn 1\.\s*/i, '');
+    return displayText((card && card.text) || '').replace(/Enter by end of turn 1\.\s*/i, '');
   }
 
   function pills(p) {
@@ -467,7 +483,7 @@
     const inc = G.projIncome(p);
     const pulse = p.turnCount && p.turnCount % 3 === 0;
     return '<span class="crystals">' +
-      '<span class="crystal" title="Specie">' + gem('cost', p.specie) + ' Specie</span>' +
+      '<span class="crystal" title="Specie">' + gem('cost', p.specie, 0, '') + ' Specie</span>' +
       '<span class="crystal wage-bill" title="Total wages this turn">' + gem('wage', bill) + ' Wages</span>' +
       '</span>' +
       '<span class="pill">Income ' + inc + '</span>' +
@@ -539,9 +555,37 @@
         artTag(c) +
         '<div class="body"><div class="cn">' + escapeHtml(shortName(c.name)) + '</div>' +
         '<div class="gems">' + gems.slice(1).join('') + '</div>' +
-        '<div class="ct">' + linkKeywords(c.text || '') + '</div></div></button>';
-    }).join('') || '<span class="sub">No cards in hand</span>';
+        '<div class="ct">' + linkKeywords(shownText(c)) + '</div></div></button>';
+    }).join('') || '<span class="sub empty-hand">No cards in hand</span>';
     bindKeywords($('hand'));
+    layoutHandFan();
+  }
+
+  function layoutHandFan() {
+    const hand = $('hand');
+    if (!hand) return;
+    const cards = [...hand.querySelectorAll('.card')];
+    const n = cards.length;
+    if (!n) return;
+    const W = hand.clientWidth || 390;
+    const pad = 8;
+    const cardW = Math.min(152, Math.max(118, Math.floor(W * 0.40)));
+    const avail = Math.max(cardW, W - pad * 2);
+    const maxStep = cardW - 22;
+    let step = 0;
+    if (n > 1) step = Math.min(maxStep, (avail - cardW) / (n - 1));
+    if (n > 1 && step < 22) step = (avail - cardW) / (n - 1);
+    const total = n === 1 ? cardW : cardW + step * (n - 1);
+    const start = pad + Math.max(0, (avail - total) / 2);
+    cards.forEach((el, i) => {
+      el.style.width = cardW + 'px';
+      el.style.left = (start + i * step) + 'px';
+      el.style.bottom = '6px';
+      el.style.zIndex = String(i + 1);
+      el.style.transform = '';
+    });
+    const sampleH = cards[0].offsetHeight || 148;
+    hand.style.height = (sampleH + 14) + 'px';
   }
 
   function renderLeader(slotId, p, who) {
@@ -562,11 +606,24 @@
   function formatLog(notes) {
     const out = [];
     for (const n of notes || []) {
-      if (/^T\d+\s+P\d+/.test(n)) continue;
       let s = String(n).trim();
-      s = s.replace(/^P0 plays \S+\s+/, 'You play ');
-      s = s.replace(/^P1 plays \S+\s+/, 'AI plays ');
+      if (/^T\d+\s+P\d+/.test(s)) {
+        const m = s.match(/bill (\d+) (MISSED|paid) specie (\d+)/i);
+        if (!m) continue;
+        const who = /P0 /.test(s) ? 'You' : 'The AI';
+        s = m[2].toLowerCase() === 'paid'
+          ? (who + ' paid ' + m[1] + ' Specie in wages, ' + m[3] + ' left.')
+          : (who + ' missed wages (needed ' + m[1] + ' Specie, ' + m[3] + ' left).');
+      }
+      s = s.replace(/^P0 plays \S+\s+(.+?) \([^)]*cost (\d+)[^)]*\)(?:\s*\[LOW: blank\])?\s*specie left (\d+)/i,
+        (_, name, cost, left) => 'You play ' + name + ' for ' + cost + ' Specie (' + left + ' left).');
+      s = s.replace(/^P1 plays \S+\s+(.+?) \([^)]*cost (\d+)[^)]*\)(?:\s*\[LOW: blank\])?\s*specie left (\d+)/i,
+        (_, name, cost, left) => 'The AI plays ' + name + ' for ' + cost + ' Specie (' + left + ' left).');
+      s = s.replace(/specie left (\d+)/gi, (_, n) => n + ' Specie left');
+      s = s.replace(/\s*\[LOW: blank\]/g, '');
       s = s.replace(/^\s*attack:\s*/, 'Attack: ');
+      s = s.replace(/^AI Leader entered:/, "The AI's Leader entered:");
+      s = s.replace(/^AI /g, 'The AI ');
       if (s) out.push(s);
     }
     return out.slice(-3);
@@ -612,6 +669,9 @@
     $('log').scrollTop = $('log').scrollHeight;
     pulseTimefall(g);
   }
+
+  window.addEventListener('resize', () => layoutHandFan());
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => layoutHandFan());
 
   function soulByUid(uid) {
     uid = +uid;

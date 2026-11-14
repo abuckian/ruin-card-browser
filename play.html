@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#0e0c0a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <title>RUIN — Play</title>
+<link rel="icon" type="image/svg+xml" href="play/icon.svg?v=20261114tfan">
+<link rel="apple-touch-icon" href="play/apple-touch-icon.png?v=20261114tfan">
 <style>
 :root {
   --bg:#0e0c0a; --elev:#1a1612; --elev2:#241f18; --border:#3a3228;
@@ -55,9 +57,9 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
   25%{opacity:1}
   100%{opacity:0;transform:translateX(30%)}
 }
-#table{flex:0 0 auto;min-height:0;min-width:0;overflow:visible}
+#table{flex:1 1 auto;min-height:0;min-width:0;overflow:auto}
 #topbar,#youbar{padding:6px 10px;background:rgba(8,8,6,.82);border-bottom:1px solid rgba(200,230,70,.18);flex:0 0 auto;backdrop-filter:blur(6px)}
-#youbar{border-top:1px solid rgba(200,230,70,.18);border-bottom:0;padding-bottom:6px}
+#youbar{border-top:1px solid rgba(200,230,70,.18);border-bottom:0;padding-bottom:max(8px,var(--safe-bottom))}
 .statline{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:nowrap}
 .name{font-weight:700;white-space:nowrap;flex:0 0 auto}.name.col{color:#d7c27a}.name.anu{color:#e0c56a}
 .pills{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;min-width:0;overflow:auto}
@@ -73,14 +75,20 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 .board.empty{padding:0;min-height:0}
 .lane{display:flex;gap:6px;flex-wrap:wrap}
 /* gems: cost / might / wage — never health or attack */
-.gem{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-weight:800;font-size:.72rem;line-height:1;position:relative;
+.gem{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:28px;height:30px;border-radius:50%;font-weight:800;font-size:.72rem;line-height:1;position:relative;padding-top:1px;gap:0;
   box-shadow:0 0 0 1px rgba(0,0,0,.65),0 2px 5px rgba(0,0,0,.55)}
+.gem .gv{font-size:.72rem;line-height:1;font-weight:800}
+.gem .gl{font-size:.5rem;line-height:1;font-weight:800;letter-spacing:.03em;margin-top:1px;opacity:.95}
 .gem.cost{background:radial-gradient(circle at 35% 30%,#f3e08a,#c9a227 58%,#5a450c);color:#1a1408}
 .gem.might{background:radial-gradient(circle at 35% 30%,#e8f79a,#8ea32c 55%,#2a320c);color:#f7f4dc}
 .gem.might.hurt{box-shadow:0 0 0 2px #c43333,0 0 8px rgba(220,50,50,.65),0 2px 5px rgba(0,0,0,.55)}
 .gem .dmg{position:absolute;top:-7px;right:-7px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:#b01c1c;color:#fff;font-size:.58rem;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px #4a0000}
 .gem.wage{background:radial-gradient(circle at 35% 30%,#f0d2a0,#b06a28 58%,#4a2a0c);color:#1a1208}
-.gem.life{background:radial-gradient(circle at 35% 30%,#f0c070,#a84820 55%,#4a1808);color:#fff8e8;width:30px;height:30px;font-size:.8rem}
+.gem.life{background:radial-gradient(circle at 35% 30%,#f0c070,#a84820 55%,#4a1808);color:#fff8e8;width:30px;height:30px}
+.gem.life .gv{font-size:.8rem}
+.crystal .gem{width:24px;height:26px}
+.crystal .gem .gv{font-size:.64rem}
+.crystal .gem .gl{font-size:.46rem}
 /* board tokens */
 .token{position:relative;background:rgba(18,16,12,.88);border:1px solid rgba(200,230,70,.28);border-radius:12px;padding:0;min-width:86px;max-width:48%;overflow:hidden;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none}
 .token.tapped{opacity:.65}
@@ -95,21 +103,22 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 #log:empty{display:none}
 #prompt{padding:6px 10px;background:rgba(12,12,8,.9);border-top:1px solid rgba(200,230,70,.22);border-bottom:1px solid rgba(200,230,70,.22);flex:0 0 auto}
 #prompt .q{font-weight:700;margin:0 0 6px;font-size:.88rem}
-#handWrap{flex:1 1 auto;min-width:0;min-height:0;width:100%;overflow:hidden;border-top:1px solid rgba(200,230,70,.22);background:rgba(8,8,6,.92)}
-#hand{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:6px 16px 8px;width:100%;max-width:100%;min-width:0;min-height:0;max-height:100%;height:100%;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scrollbar-width:thin}
-#hand::-webkit-scrollbar{height:6px}
-#hand::-webkit-scrollbar-thumb{background:#c9e84a;border-radius:4px}
-.card{flex:0 0 146px;width:146px;background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.3);border-radius:12px;padding:0;min-height:0;box-shadow:0 6px 16px rgba(0,0,0,.55);text-align:left;overflow:hidden;scroll-snap-align:start;position:relative;-webkit-appearance:none;appearance:none}
+#handWrap{flex:0 0 auto;min-width:0;width:100%;overflow:hidden;border-top:1px solid rgba(200,230,70,.22);background:rgba(8,8,6,.92)}
+#hand{position:relative;display:block;overflow:hidden;width:100%;height:164px;padding:0;margin:0}
+#hand .empty-hand{position:absolute;left:12px;top:14px;margin:0}
+.card{background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.3);border-radius:12px;padding:0;min-height:0;box-shadow:0 6px 16px rgba(0,0,0,.55);text-align:left;overflow:hidden;position:relative;-webkit-appearance:none;appearance:none}
+#hand .card{position:absolute;bottom:6px;left:8px;width:148px;margin:0;transition:transform .15s ease, box-shadow .15s;z-index:1}
+#hand .card:active, #hand .card.up{transform:translateY(-10px);z-index:40;box-shadow:0 10px 22px rgba(0,0,0,.7)}
 .card.can{outline:2px solid #e8f56a}
-.card .art{display:block;width:100%;height:68px;object-fit:cover;background:#000;border:0}
-.card .body{padding:7px 8px 8px}
-.card .cn{font-weight:700;font-size:.82rem;line-height:1.2;max-height:2.4em;overflow:hidden}
-.card .gems{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 4px;align-items:center}
-.card .ct{color:var(--text);font-size:.64rem;line-height:1.3;max-height:2.7em;overflow:auto;white-space:pre-wrap}
+.card .art{display:block;width:100%;height:70px;object-fit:cover;background:#111;border:0}
+.card .body{padding:6px 8px 8px}
+.card .cn{font-weight:700;font-size:.8rem;line-height:1.15;max-height:2.3em;overflow:hidden}
+.card .gems{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 0;align-items:center}
+.card .ct{display:none}
 .card .cost-slot{position:absolute;top:6px;left:6px;z-index:2}
 .lcard{width:100%;background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.4);border-radius:12px;padding:0;overflow:hidden;text-align:left;box-shadow:0 6px 16px rgba(0,0,0,.55);-webkit-appearance:none;appearance:none}
-.lcard .portrait{position:relative}
-.lcard .art{display:block;width:100%;height:64px;object-fit:cover;background:#000}
+.lcard .portrait{position:relative;min-height:64px;background:#111}
+.lcard .art{display:block;width:100%;height:64px;object-fit:cover;background:#111}
 .lcard .life-wrap{position:absolute;left:6px;bottom:6px}
 .lcard .rune{position:absolute;right:6px;bottom:6px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .rune-gem{width:22px;height:22px;border-radius:4px;transform:rotate(45deg);
@@ -123,6 +132,9 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 .lcard .cn{font-weight:700;font-size:.76rem;line-height:1.2;color:#e8f56a}
 .lcard .ct{font-size:.62rem;line-height:1.25;color:var(--text);max-height:2.6em;overflow:auto;white-space:pre-wrap}
 .bar-acts{display:flex;gap:6px;padding:0;align-items:center}
+#youbar .pills{gap:4px}
+#youbar .pill{padding:3px 7px;font-size:.74rem}
+#youbar .btn.small{padding:6px 8px;min-height:36px}
 /* modal */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;padding:18px 12px calc(18px + var(--safe-bottom));overflow:auto}
 .modal.on{display:block}
@@ -169,7 +181,7 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
 <body>
 <div id="setup" class="screen on pad">
   <h1>RUIN</h1>
-  <p class="sub">Play against the AI. Round five build (t): base income 2, missed wages Age your highest Wage Soul. Decks may mix Colovian and Anu cards.</p>
+  <p class="sub">Play against the AI. Base income is 2 Specie each turn. If you miss wages, your highest Wage Soul is Aged. Decks may mix Colovian and Anu cards.</p>
   <label class="field">Your Leader
     <select id="leaderSel"></select>
   </label>
@@ -288,10 +300,10 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
 
 <div id="tip"></div>
 
-<script src="play/cards.js?v=20261114tsyphas"></script>
-<script src="play/rules.js?v=20261114tsyphas"></script>
-<script src="play/engine.js?v=20261114tsyphas"></script>
-<script src="play/deck.js?v=20261114tsyphas"></script>
-<script src="play/app.js?v=20261114tsyphas"></script>
+<script src="play/cards.js?v=20261114tfan"></script>
+<script src="play/rules.js?v=20261114tfan"></script>
+<script src="play/engine.js?v=20261114tfan"></script>
+<script src="play/deck.js?v=20261114tfan"></script>
+<script src="play/app.js?v=20261114tfan"></script>
 </body>
 </html>

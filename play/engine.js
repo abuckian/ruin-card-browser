@@ -1279,7 +1279,12 @@ class Game {
   async play(p, card) {
     const c = this.cost(p, card);
     p.specie -= c;
-    if (this.log) this.log(`  P${p.idx} plays ${card.id} ${card.name} (${card.type} cost ${c}${card.type==='Martial'?' M'+card.might+' W'+card.wage:''})${p.high?'':' [LOW: blank]'} specie left ${p.specie}`);
+    if (this.log) {
+      const who = p.isHuman ? 'You play ' : 'The AI plays ';
+      let msg = who + card.name + ' for ' + c + ' Specie (' + p.specie + ' left)';
+      if (!p.high) msg += '. Low Cohesion — this is blank this turn';
+      this.log(msg + '.');
+    }
     p.hand.splice(p.hand.indexOf(card), 1);
     p.stats.played[card.id] = (p.stats.played[card.id] || 0) + 1;
     if (hasKw({ card }, 'Canopy')) p.canopyUsedOrHad = true;
@@ -1337,7 +1342,7 @@ class Game {
     else if (this.hasFlag(p, 'abbadon') && !p.flagsUsed.abbadon) {
       let use = true;
       if (p.isHuman && this.chooser && this.chooser.confirmYes) use = await this.chooser.confirmYes(this, p, "Abbadon: lose 1 Life instead of low Cohesion?");
-      if (use) { p.flagsUsed.abbadon = 1; p.high = true; this.loseLife(p, 1); this.log((p.isHuman?'You':'AI') + ' used Abbadon: 1 Life instead of low Cohesion'); }
+      if (use) { p.flagsUsed.abbadon = 1; p.high = true; this.loseLife(p, 1); this.log((p.isHuman?'You':'The AI') + ' used Abbadon: 1 Life instead of low Cohesion'); }
       else { missed = true; p.high = false; p.lastMissedAmount = bill - p.specie; if (this.opts.missDrain) p.specie = 0; }
     }
     else { missed = true; p.high = false; p.lastMissedAmount = bill - p.specie; if (this.opts.missDrain) p.specie = 0; }
@@ -1351,13 +1356,15 @@ class Game {
         const cands = p.souls.filter(x => this.wageOf(x) > 0).sort((a, b) => this.wageOf(b) - this.wageOf(a) || (a.deploy + a.baseMight) - (b.deploy + b.baseMight));
         let t = cands[0];
         if (t && p.isHuman && this.chooser && this.chooser.pickMissAge) t = await this.chooser.pickMissAge(this, p, cands);
-        if (t) { p.stats.missAged = (p.stats.missAged || 0) + 1; this.log((p.isHuman?'You':'AI') + ' missed wages: ' + t.name + ' is Aged'); if (t.age > 0) await this.destroy(t); else await this.age(t, 1, null, 'self'); }
+        if (t) { p.stats.missAged = (p.stats.missAged || 0) + 1; if (t.age > 0) await this.destroy(t); else await this.age(t, 1, null, 'self'); if (this.log) this.log((p.isHuman?'You':'The AI') + ' missed wages (needed ' + bill + ' Specie, ' + p.specie + ' left). ' + t.name + ' is Aged.'); }
+        else if (this.log) this.log((p.isHuman?'You':'The AI') + ' missed wages (needed ' + bill + ' Specie, ' + p.specie + ' left).');
       }
     }
     p.missPunish = 0;
-    if (this.log) this.log(`T${this.turn} P${p.idx} ${p.faction} life ${p.life}/${o.life} income ${inc} bill ${bill} ${missed?'MISSED':'paid'} specie ${p.specie} hand ${p.hand.length} board ${p.souls.map(s=>s.name.split(' ')[0]+':'+this.might(s)+(s.tapped?'t':'')).join(',')} | opp ${o.souls.map(s=>s.name.split(' ')[0]+':'+this.might(s)+(s.tapped?'t':'')).join(',')}`);
+    if (this.log && !missed && bill > 0) this.log((p.isHuman?'You':'The AI') + ' paid ' + bill + ' Specie in wages, ' + p.specie + ' left.');
+    else if (this.log && missed && !this.opts.missAge) this.log((p.isHuman?'You':'The AI') + ' missed wages (needed ' + bill + ' Specie, ' + p.specie + ' left).');
     // 4. main
-    if (p.turnCount === 1) { p.leader = this.mkPerm(p, p.leaderCard, 'leader'); this.applyLeaderNerf(p.leader); await this.fireSelf(p.leader, 'enter', {}); this.log((p.isHuman?'Your':'AI') + ' Leader entered: ' + p.leaderCard.name); }
+    if (p.turnCount === 1) { p.leader = this.mkPerm(p, p.leaderCard, 'leader'); this.applyLeaderNerf(p.leader); await this.fireSelf(p.leader, 'enter', {}); this.log((p.isHuman?'Your':'The AI\'s') + ' Leader entered: ' + p.leaderCard.name); }
     if (p.isHuman && this.chooser && this.chooser.pickMainPlay) {
       for (let guard = 0; guard < 20; guard++) {
         const card = await this.chooser.pickMainPlay(this, p);
@@ -1436,10 +1443,24 @@ class Game {
     }
     await this.sba();
     const live = attackers.filter(a => a.alive);
-    const blocks = (o.isHuman && this.chooser && this.chooser.pickBlocks)
-      ? (await this.chooser.pickBlocks(this, o, live)) || new Map()
-      : AI.chooseBlocks(this, o, live);
-    if (this.log) this.log(`  attack: ${live.map(a=>a.name.split(' ')[0]+':'+this.might(a)+((blocks.get(a)||[]).length?' blocked by '+blocks.get(a).map(b=>b.name.split(' ')[0]+':'+this.might(b)).join('+'):'')).join('; ')}`);
+    let blocks = new Map();
+    if (live.length) {
+      const canBlockAny = o.souls.some(b => live.some(a => AI.canBlock(this, b, a)));
+      if (o.isHuman && this.chooser && this.chooser.pickBlocks && canBlockAny) {
+        blocks = (await this.chooser.pickBlocks(this, o, live)) || new Map();
+      } else if (!(o.isHuman && this.chooser && this.chooser.pickBlocks)) {
+        blocks = AI.chooseBlocks(this, o, live);
+      }
+    }
+    if (this.log && live.length) {
+      const who = p.isHuman ? 'You attack' : 'The AI attacks';
+      const parts = live.map(a => {
+        const bs = blocks.get(a) || [];
+        const me = a.name + ' (Might ' + this.might(a) + ')';
+        return bs.length ? (me + ', blocked by ' + bs.map(b => b.name + ' (Might ' + this.might(b) + ')').join(' and ')) : me;
+      });
+      this.log(who + ' with ' + parts.join('; ') + '.');
+    }
     // snapshot Might simultaneously
     for (const [a, bs] of blocks) if (a.flags.debuffBlockers) for (const b of bs) b.combatDebuff += 1;
     const M = new Map(); for (const s of [...live, ...[].concat(...blocks.values())]) M.set(s, this.might(s));
@@ -1531,15 +1552,15 @@ class Game {
 
 Game.prototype._applyPulsePick = async function(p, pick, o) {
     const kind = (pick && pick.type) || 'life';
-    if (kind === 'payPulse') { p.flagsUsed.payPulse = 1; p.specie -= 2; p.stats.pulseSkip++; this.log((p.isHuman?'You':'AI') + ' paid 2 Specie to skip Timefall'); return; }
-    if (kind === 'ageSkip' && pick.soul) { p.stats.pulseSkip++; await this.age(pick.soul, 1, p, 'self'); this.log((p.isHuman?'You':'AI') + ' Aged ' + pick.soul.name + ' to skip Timefall'); return; }
+    if (kind === 'payPulse') { p.flagsUsed.payPulse = 1; p.specie -= 2; p.stats.pulseSkip++; this.log((p.isHuman?'You':'The AI') + ' paid 2 Specie to skip Timefall'); return; }
+    if (kind === 'ageSkip' && pick.soul) { p.stats.pulseSkip++; await this.age(pick.soul, 1, p, 'self'); this.log((p.isHuman?'You':'The AI') + ' Aged ' + pick.soul.name + ' to skip Timefall'); return; }
     if (kind === 'canopy' || kind === 'samuel') {
       if (kind === 'canopy' && this.hasFlag(o, 'antiCanopy') && o.flagsUsed.antiCanopy !== this.turn) { o.flagsUsed.antiCanopy = this.turn; p.stats.canopyDenied = (p.stats.canopyDenied || 0) + 1; this.log('Canopy skip was denied'); }
-      else { if (kind === 'canopy') p.canopy--; p.canopyUsedOrHad = true; p.canopySkippedEver = true; p.stats.pulseSkip++; await this.fire(p, 'canopyUsed', {}); this.log((p.isHuman?'You':'AI') + ' skipped Timefall with Canopy'); return; }
+      else { if (kind === 'canopy') p.canopy--; p.canopyUsedOrHad = true; p.canopySkippedEver = true; p.stats.pulseSkip++; await this.fire(p, 'canopyUsed', {}); this.log((p.isHuman?'You':'The AI') + ' skipped Timefall with Canopy'); return; }
     }
-    if (kind === 'custodes' && pick.soul) { p.stats.pulseAge++; await this.age(pick.soul, 1, p, 'pulse'); this.log((p.isHuman?'You':'AI') + ' Aged ' + pick.soul.name + ' instead of Timefall (Michael)'); return; }
-    if (kind === 'age' && pick.soul) { p.stats.pulseAge++; await this.age(pick.soul, 1, p, 'pulse'); this.log((p.isHuman?'You':'AI') + ' Aged ' + pick.soul.name + ' for Timefall'); return; }
-    p.stats.pulseLife++; this.loseLife(p, 1); this.log((p.isHuman?'You':'AI') + ' lost 1 Life to Timefall');
+    if (kind === 'custodes' && pick.soul) { p.stats.pulseAge++; await this.age(pick.soul, 1, p, 'pulse'); this.log((p.isHuman?'You':'The AI') + ' Aged ' + pick.soul.name + ' instead of Timefall (Michael)'); return; }
+    if (kind === 'age' && pick.soul) { p.stats.pulseAge++; await this.age(pick.soul, 1, p, 'pulse'); this.log((p.isHuman?'You':'The AI') + ' Aged ' + pick.soul.name + ' for Timefall'); return; }
+    p.stats.pulseLife++; this.loseLife(p, 1); this.log((p.isHuman?'You':'The AI') + ' lost 1 Life to Timefall');
 };
 Game.prototype._doActivations = async function(p) {
     const acts = [];
