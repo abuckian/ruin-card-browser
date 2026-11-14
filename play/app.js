@@ -477,17 +477,19 @@
     return displayText((card && card.text) || '').replace(/Enter by end of turn 1\.\s*/i, '');
   }
 
-  function pills(p) {
+  function pills(p, compact) {
     const G = st.game;
     const bill = G.wageBill(p);
     const inc = G.projIncome(p);
     const pulse = p.turnCount && p.turnCount % 3 === 0;
+    const incTurn = compact
+      ? '<span class="pill">In ' + inc + (p.turnCount ? ' · T' + p.turnCount : '') + (pulse ? ' · Timefall' : '') + '</span>'
+      : ('<span class="pill">Income ' + inc + '</span>' +
+        (p.turnCount ? '<span class="pill">Turn ' + p.turnCount + (pulse ? ' · Timefall' : '') + '</span>' : ''));
     return '<span class="crystals">' +
       '<span class="crystal" title="Specie">' + gem('cost', p.specie, 0, '') + ' Specie</span>' +
       '<span class="crystal wage-bill" title="Total wages this turn">' + gem('wage', bill) + ' Wages</span>' +
-      '</span>' +
-      '<span class="pill">Income ' + inc + '</span>' +
-      (p.turnCount ? '<span class="pill">Turn ' + p.turnCount + (pulse ? ' · Timefall' : '') + '</span>' : '');
+      '</span>' + incTurn;
   }
 
   function tokenSoul(s, cls) {
@@ -563,29 +565,18 @@
 
   function layoutHandFan() {
     const hand = $('hand');
-    if (!hand) return;
+    const wrap = $('handWrap');
+    if (!hand || !wrap) return;
     const cards = [...hand.querySelectorAll('.card')];
-    const n = cards.length;
-    if (!n) return;
-    const W = hand.clientWidth || 390;
-    const pad = 8;
-    const cardW = Math.min(152, Math.max(118, Math.floor(W * 0.40)));
-    const avail = Math.max(cardW, W - pad * 2);
-    const maxStep = cardW - 22;
-    let step = 0;
-    if (n > 1) step = Math.min(maxStep, (avail - cardW) / (n - 1));
-    if (n > 1 && step < 22) step = (avail - cardW) / (n - 1);
-    const total = n === 1 ? cardW : cardW + step * (n - 1);
-    const start = pad + Math.max(0, (avail - total) / 2);
     cards.forEach((el, i) => {
-      el.style.width = cardW + 'px';
-      el.style.left = (start + i * step) + 'px';
-      el.style.bottom = '6px';
-      el.style.zIndex = String(i + 1);
+      el.style.left = '';
+      el.style.bottom = '';
+      el.style.width = '';
       el.style.transform = '';
+      el.style.zIndex = String(i + 1);
     });
-    const sampleH = cards[0].offsetHeight || 148;
-    hand.style.height = (sampleH + 14) + 'px';
+    hand.style.height = '';
+    wrap.classList.toggle('fit', cards.length > 0 && hand.scrollWidth <= wrap.clientWidth + 1);
   }
 
   function renderLeader(slotId, p, who) {
@@ -659,7 +650,7 @@
     $('meName').textContent = 'You · ' + facLabel(me);
     $('meName').className = 'name ' + (me.faction === 'Anu' ? 'anu' : 'col');
     $('aiPills').innerHTML = pills(ai);
-    $('mePills').innerHTML = pills(me);
+    $('mePills').innerHTML = pills(me, true);
     renderLeader('aiLeaderSlot', ai, 'ai');
     renderLeader('meLeaderSlot', me, 'me');
     lane(ai, 'ai');

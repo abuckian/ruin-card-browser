@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#0e0c0a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <title>RUIN — Play</title>
-<link rel="icon" type="image/svg+xml" href="play/icon.svg?v=20261114tfan">
-<link rel="apple-touch-icon" href="play/apple-touch-icon.png?v=20261114tfan">
+<link rel="icon" type="image/svg+xml" href="play/icon.svg?v=20261114thand">
+<link rel="apple-touch-icon" href="play/apple-touch-icon.png?v=20261114thand">
 <style>
 :root {
   --bg:#0e0c0a; --elev:#1a1612; --elev2:#241f18; --border:#3a3228;
@@ -58,8 +58,12 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
   100%{opacity:0;transform:translateX(30%)}
 }
 #table{flex:1 1 auto;min-height:0;min-width:0;overflow:auto}
-#topbar,#youbar{padding:6px 10px;background:rgba(8,8,6,.82);border-bottom:1px solid rgba(200,230,70,.18);flex:0 0 auto;backdrop-filter:blur(6px)}
-#youbar{border-top:1px solid rgba(200,230,70,.18);border-bottom:0;padding-bottom:max(8px,var(--safe-bottom))}
+#topbar,#youbar{padding:4px 8px;background:rgba(8,8,6,.82);border-bottom:1px solid rgba(200,230,70,.18);flex:0 0 auto;backdrop-filter:blur(6px)}
+#youbar{border-top:1px solid rgba(200,230,70,.18);border-bottom:1px solid rgba(200,230,70,.18);padding:3px 8px}
+#topbar .crystals,#youbar .crystals{flex-wrap:nowrap;gap:5px}
+#topbar .pills,#youbar .pills{flex-wrap:nowrap;min-width:0;overflow-x:auto}
+#topbar .crystal,#youbar .crystal{padding:2px 6px 2px 3px;font-size:.72rem}
+#topbar .pill,#youbar .pill{padding:2px 6px;font-size:.7rem;white-space:nowrap}
 .statline{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:nowrap}
 .name{font-weight:700;white-space:nowrap;flex:0 0 auto}.name.col{color:#d7c27a}.name.anu{color:#e0c56a}
 .pills{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;min-width:0;overflow:auto}
@@ -68,8 +72,8 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 .crystal{display:inline-flex;align-items:center;gap:5px;background:rgba(20,18,12,.8);border:1px solid rgba(201,162,39,.45);border-radius:999px;padding:3px 9px 3px 4px;font-size:.8rem;font-weight:700}
 .crystal .gem{width:22px;height:22px;font-size:.68rem}
 .crystal.wage-bill{border-color:rgba(200,140,50,.5)}
-.side-row{display:flex;gap:8px;align-items:stretch;padding:4px 8px;min-width:0;flex:0 0 auto}
-.leader-slot{flex:0 0 136px;min-width:0}
+.side-row{display:flex;gap:8px;align-items:flex-start;padding:2px 8px;min-width:0;flex:0 0 auto}
+.leader-slot{flex:0 1 168px;min-width:132px;max-width:52%}
 .side-row .board{flex:1;min-width:0}
 .board{padding:4px 6px;min-height:0}
 .board.empty{padding:0;min-height:0}
@@ -99,26 +103,31 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 .token .tn{display:block;font-weight:700;font-size:.72rem;padding:4px 6px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .token .gems{display:flex;gap:4px;align-items:center;padding:3px 6px 6px}
 .token .meta{color:var(--muted);font-size:.62rem;padding:0 6px 4px}
-#log{font-size:.75rem;color:var(--muted);padding:2px 10px;max-height:2.5em;overflow:auto;line-height:1.3;flex:0 0 auto}
+#log{font-size:.7rem;color:var(--muted);padding:1px 10px;max-height:2.2em;overflow:auto;line-height:1.25;flex:0 0 auto}
 #log:empty{display:none}
-#prompt{padding:6px 10px;background:rgba(12,12,8,.9);border-top:1px solid rgba(200,230,70,.22);border-bottom:1px solid rgba(200,230,70,.22);flex:0 0 auto}
-#prompt .q{font-weight:700;margin:0 0 6px;font-size:.88rem}
-#handWrap{flex:0 0 auto;min-width:0;width:100%;overflow:hidden;border-top:1px solid rgba(200,230,70,.22);background:rgba(8,8,6,.92)}
-#hand{position:relative;display:block;overflow:hidden;width:100%;height:164px;padding:0;margin:0}
-#hand .empty-hand{position:absolute;left:12px;top:14px;margin:0}
+#prompt{padding:3px 10px;background:rgba(12,12,8,.9);border-top:1px solid rgba(200,230,70,.22);border-bottom:1px solid rgba(200,230,70,.22);flex:0 0 auto}
+#prompt .q{font-weight:700;margin:0 0 3px;font-size:.8rem}
+#prompt .btn{min-height:36px;padding:6px 12px}
+#handWrap{flex:0 0 auto;width:100%;min-width:0;height:calc(200px + var(--safe-bottom));padding-bottom:var(--safe-bottom);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin;background:rgba(8,8,6,.92)}
+#handWrap::-webkit-scrollbar{height:5px}
+#handWrap::-webkit-scrollbar-thumb{background:#c9e84a;border-radius:4px}
+#hand{display:flex;flex-direction:row;align-items:flex-end;height:200px;width:max-content;min-width:100%;padding:8px 14px;box-sizing:border-box;position:relative}
+#handWrap.fit #hand{justify-content:center}
+#hand .empty-hand{margin:auto 0;padding:8px}
 .card{background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.3);border-radius:12px;padding:0;min-height:0;box-shadow:0 6px 16px rgba(0,0,0,.55);text-align:left;overflow:hidden;position:relative;-webkit-appearance:none;appearance:none}
-#hand .card{position:absolute;bottom:6px;left:8px;width:148px;margin:0;transition:transform .15s ease, box-shadow .15s;z-index:1}
-#hand .card:active, #hand .card.up{transform:translateY(-10px);z-index:40;box-shadow:0 10px 22px rgba(0,0,0,.7)}
+#hand .card{position:relative;flex:0 0 140px;width:140px;height:184px;margin:0 0 0 -12px;left:auto;bottom:auto;transition:transform .15s ease, box-shadow .15s;z-index:1}
+#hand .card:first-child{margin-left:0}
+#hand .card:active, #hand .card.up{transform:translateY(-8px);z-index:40;box-shadow:0 10px 22px rgba(0,0,0,.7)}
 .card.can{outline:2px solid #e8f56a}
-.card .art{display:block;width:100%;height:70px;object-fit:cover;background:#111;border:0}
+.card .art{display:block;width:100%;height:100px;object-fit:cover;background:#111;border:0}
 .card .body{padding:6px 8px 8px}
-.card .cn{font-weight:700;font-size:.8rem;line-height:1.15;max-height:2.3em;overflow:hidden}
+.card .cn{font-weight:700;font-size:.72rem;line-height:1.15;max-height:3.45em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;white-space:normal;word-break:break-word}
 .card .gems{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 0;align-items:center}
 .card .ct{display:none}
 .card .cost-slot{position:absolute;top:6px;left:6px;z-index:2}
-.lcard{width:100%;background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.4);border-radius:12px;padding:0;overflow:hidden;text-align:left;box-shadow:0 6px 16px rgba(0,0,0,.55);-webkit-appearance:none;appearance:none}
-.lcard .portrait{position:relative;min-height:64px;background:#111}
-.lcard .art{display:block;width:100%;height:64px;object-fit:cover;background:#111}
+.lcard{width:100%;background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.4);border-radius:12px;padding:0;overflow:visible;text-align:left;box-shadow:0 6px 16px rgba(0,0,0,.55);-webkit-appearance:none;appearance:none}
+.lcard .portrait{position:relative;min-height:52px;background:#111}
+.lcard .art{display:block;width:100%;height:52px;object-fit:cover;background:#111}
 .lcard .life-wrap{position:absolute;left:6px;bottom:6px}
 .lcard .rune{position:absolute;right:6px;bottom:6px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .rune-gem{width:22px;height:22px;border-radius:4px;transform:rotate(45deg);
@@ -129,12 +138,12 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 .rune.high .rune-lab{color:#d8f070}
 .rune.low .rune-lab{color:#7a7460}
 .lcard .body{padding:6px 7px 8px}
-.lcard .cn{font-weight:700;font-size:.76rem;line-height:1.2;color:#e8f56a}
-.lcard .ct{font-size:.62rem;line-height:1.25;color:var(--text);max-height:2.6em;overflow:auto;white-space:pre-wrap}
+.lcard .cn{font-weight:700;font-size:.74rem;line-height:1.2;color:#e8f56a}
+.lcard .ct{font-size:.56rem;line-height:1.28;color:var(--text);max-height:none;overflow:visible;white-space:pre-wrap}
 .bar-acts{display:flex;gap:6px;padding:0;align-items:center}
-#youbar .pills{gap:4px}
-#youbar .pill{padding:3px 7px;font-size:.74rem}
-#youbar .btn.small{padding:6px 8px;min-height:36px}
+#youbar .pills{gap:4px;flex:1 1 auto}
+#youbar .btn.small{padding:4px 8px;min-height:32px;font-size:.75rem}
+#youbar .name{font-size:.86rem}
 /* modal */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;padding:18px 12px calc(18px + var(--safe-bottom));overflow:auto}
 .modal.on{display:block}
@@ -278,9 +287,6 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
       <div class="board empty" id="myBoard"></div>
     </div>
   </div>
-  <div id="handWrap">
-    <div id="hand"></div>
-  </div>
   <div id="youbar">
     <div class="statline">
       <div><span class="name" id="meName">You</span></div>
@@ -291,6 +297,9 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
       </div>
     </div>
   </div>
+  <div id="handWrap">
+    <div id="hand"></div>
+  </div>
 </div>
 
 <div id="cardModal" class="modal" role="dialog"><div class="sheet" id="cardSheet"></div></div>
@@ -300,10 +309,10 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
 
 <div id="tip"></div>
 
-<script src="play/cards.js?v=20261114tfan"></script>
-<script src="play/rules.js?v=20261114tfan"></script>
-<script src="play/engine.js?v=20261114tfan"></script>
-<script src="play/deck.js?v=20261114tfan"></script>
-<script src="play/app.js?v=20261114tfan"></script>
+<script src="play/cards.js?v=20261114thand"></script>
+<script src="play/rules.js?v=20261114thand"></script>
+<script src="play/engine.js?v=20261114thand"></script>
+<script src="play/deck.js?v=20261114thand"></script>
+<script src="play/app.js?v=20261114thand"></script>
 </body>
 </html>
