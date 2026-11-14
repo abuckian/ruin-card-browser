@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0e0c0a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>RUIN — Play</title>
+<style>
+:root {
+  --bg:#0e0c0a; --elev:#1a1612; --elev2:#241f18; --border:#3a3228;
+  --text:#f0e6d2; --muted:#a89880; --accent:#c9a227;
+  --colovian:#6b8cae; --anu:#c45c26;
+  --high:#4a9; --low:#b44; --shadow:0 8px 28px rgba(0,0,0,.55);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);min-height:100%;min-height:100dvh}
+body{background-image:radial-gradient(ellipse at top,#1c1812 0%,var(--bg) 55%)}
+button,select{font:inherit;color:inherit}
+.screen{display:none;min-height:100dvh;flex-direction:column}
+.screen.on{display:flex}
+h1{margin:0;font-size:1.35rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.sub{color:var(--muted);font-size:.85rem;margin:.35rem 0 1rem}
+.pad{padding:16px 16px calc(16px + var(--safe-bottom))}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;background:var(--elev2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;min-height:44px;font-weight:600}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);color:#1a1408;border-color:var(--accent)}
+.btn.col{border-color:var(--colovian);color:#dbe7f4}
+.btn.anu{border-color:var(--anu);color:#f3d4c4}
+.btn.picked{outline:2px solid var(--accent)}
+.btn.wide{flex:1 1 100%}
+label.field{display:flex;flex-direction:column;gap:4px;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0}
+select, .field input{background:var(--elev);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:1rem;min-height:44px;color:var(--text)}
+/* game layout */
+#topbar,#youbar{padding:8px 12px;background:rgba(14,12,10,.92);border-bottom:1px solid var(--border)}
+#youbar{border-top:1px solid var(--border);border-bottom:0;padding-bottom:calc(8px + var(--safe-bottom))}
+.statline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.name{font-weight:700}.name.col{color:var(--colovian)}.name.anu{color:var(--anu)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{background:var(--elev);border:1px solid var(--border);border-radius:999px;padding:4px 9px;font-size:.8rem}
+.pill.hi{color:var(--high)}.pill.lo{color:var(--low)}
+.board{padding:8px 10px;min-height:72px}
+.lane{display:flex;gap:6px;flex-wrap:wrap;min-height:28px}
+.chip{background:var(--elev2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;min-width:72px;max-width:46%;font-size:.78rem;box-shadow:var(--shadow)}
+.chip.tapped{opacity:.65}
+.chip.atk{outline:2px solid var(--anu)}
+.chip.blk{outline:2px solid var(--colovian)}
+.chip.sel{outline:2px solid var(--accent)}
+.chip .t{font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .m{color:var(--muted);font-size:.72rem}
+#log{font-size:.78rem;color:var(--muted);padding:4px 12px;max-height:4.6em;overflow:auto;line-height:1.35;background:#120f0c}
+#prompt{padding:8px 12px;background:var(--elev);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+#prompt .q{font-weight:700;margin:0 0 8px;font-size:.95rem}
+#hand{display:flex;gap:8px;overflow-x:auto;padding:8px 12px 4px;-webkit-overflow-scrolling:touch}
+.card{flex:0 0 108px;background:var(--elev2);border:1px solid var(--border);border-radius:12px;padding:8px;min-height:96px;box-shadow:var(--shadow)}
+.card.can{outline:2px solid var(--accent)}
+.card .cn{font-weight:700;font-size:.78rem;line-height:1.2;max-height:2.4em;overflow:hidden}
+.card .cm{color:var(--muted);font-size:.72rem;margin-top:4px}
+.bar-acts{display:flex;gap:8px;padding:8px 12px 0}
+/* modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;padding:18px 12px calc(18px + var(--safe-bottom));overflow:auto}
+.modal.on{display:block}
+.sheet{background:var(--elev);border:1px solid var(--border);border-radius:16px;padding:16px;max-width:520px;margin:0 auto;box-shadow:var(--shadow)}
+.sheet h2{margin:0 0 10px;font-size:1.05rem;color:var(--accent)}
+.sheet .art{width:100%;border-radius:10px;margin:0 0 10px;background:#000}
+.sheet .txt{white-space:pre-wrap;line-height:1.45}
+.kw{color:var(--accent);border-bottom:1px dotted var(--accent);cursor:pointer}
+#tip{position:fixed;z-index:50;max-width:260px;background:#2a2318;color:var(--text);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:.85rem;box-shadow:var(--shadow);display:none}
+#endbox{text-align:center;padding:24px 12px}
+#endbox .big{font-size:1.6rem;color:var(--accent);margin:0 0 8px}
+</style>
+</head>
+<body>
+<div id="setup" class="screen on pad">
+  <h1>RUIN</h1>
+  <p class="sub">Play against the AI. Round five build (t): base income 2, missed wages Age your highest Wage Soul.</p>
+  <p style="margin:0 0 6px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Your faction</p>
+  <div class="row" id="factionRow">
+    <button class="btn col picked" type="button" data-fac="Colovian">Colovian</button>
+    <button class="btn anu" type="button" data-fac="Anu">Anu</button>
+  </div>
+  <label class="field">Your Leader
+    <select id="leaderSel"></select>
+  </label>
+  <button class="btn primary wide" type="button" id="btnStart">Start game</button>
+  <button class="btn wide" type="button" id="btnRulesSetup">Rules</button>
+</div>
+
+<div id="game" class="screen">
+  <div id="topbar">
+    <div class="statline">
+      <div><span class="name" id="aiName">AI</span><div id="aiLeader" style="font-size:.75rem;color:var(--muted)"></div></div>
+      <div class="pills" id="aiPills"></div>
+    </div>
+  </div>
+  <div class="board" id="aiBoard"></div>
+  <div id="log"></div>
+  <div id="prompt"><div class="q" id="promptQ">Waiting…</div><div class="row" id="promptActs"></div></div>
+  <div class="board" id="myBoard"></div>
+  <div id="hand"></div>
+  <div id="youbar">
+    <div class="statline">
+      <div><span class="name" id="meName">You</span><div id="meLeader" style="font-size:.75rem;color:var(--muted)"></div></div>
+      <div class="pills" id="mePills"></div>
+    </div>
+    <div class="bar-acts">
+      <button class="btn" type="button" id="btnRules">Rules</button>
+      <button class="btn" type="button" id="btnNew" style="display:none">New game</button>
+    </div>
+  </div>
+</div>
+
+<div id="cardModal" class="modal" role="dialog"><div class="sheet" id="cardSheet"></div></div>
+<div id="rulesModal" class="modal" role="dialog"><div class="sheet" id="rulesSheet"></div></div>
+<div id="endModal" class="modal"><div class="sheet" id="endbox"></div></div>
+<div id="tip"></div>
+
+<script src="play/cards.js?v=20261114tplay"></script>
+<script src="play/rules.js?v=20261114tplay"></script>
+<script src="play/engine.js?v=20261114tplay"></script>
+<script src="play/app.js?v=20261114tplay"></script>
+</body>
+</html>
