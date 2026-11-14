@@ -124,9 +124,31 @@
     return null;
   }
 
+  function deckPlanText(spec) {
+    if (!spec) return '';
+    return spec.plan || '';
+  }
+  function starterByValue(val) {
+    if (!val) return null;
+    if (val === 'starter') return { name: 'Random starter', plan: "A random starter whose Leader is the other faction." };
+    if (val.indexOf('starter:') === 0) return starters.find((d) => d.id === val.slice(8)) || null;
+    if (val.indexOf('saved:') === 0) return DECK.loadSaved().find((d) => d.id === val.slice(6)) || null;
+    return null;
+  }
+  function refreshPlans() {
+    const mine = starterByValue($('myDeckSel').value);
+    const theirs = starterByValue($('aiDeckSel').value);
+    $('myDeckPlan').textContent = ($('myDeckSel').value === 'random')
+      ? 'A random legal 60 from your Leader\'s faction (10 Martialus / 5 Economic / 5 Rite).'
+      : (deckPlanText(mine) || '');
+    if ($('aiDeckSel').value === 'random') $('aiDeckPlan').textContent = 'A random legal 60 from the other Leader faction.';
+    else if ($('aiDeckSel').value === 'ai') $('aiDeckPlan').textContent = 'The same auto-fill logic, for a Leader of the other faction.';
+    else $('aiDeckPlan').textContent = deckPlanText(theirs) || '';
+  }
   function refreshSetupErr() {
     const el = $('setupErr');
     const spec = selectedMySpec();
+    refreshPlans();
     if (!spec) { el.textContent = ''; $('btnStart').disabled = false; return; }
     const errs = DECK.validate(spec, CARDS);
     if (errs.length) {
@@ -240,7 +262,7 @@
         const blocks = new Map();
         let chosenBlocker = null;
         st.pickSet = { type: 'block', attackers, blocks, get chosenBlocker() { return chosenBlocker; }, set chosenBlocker(v) { chosenBlocker = v; } };
-        prompt('Assign blockers like Magic: tap one of your Souls, then the attacker it blocks. Several can gang up on one attacker. Tap a blocker again to unassign it.', [
+        prompt('Tap a Soul, then the attacker it blocks. Several can gang up. Confirm when done.', [
           { label: 'Confirm blocks', primary: true, fn: () => { st.pickSet = null; resolve(blocks); } }
         ]);
         render();
@@ -393,7 +415,7 @@
     const first = g.rng.int(2); g.first = first;
     let cur = g.players[first];
     let firstTurn = true;
-    g.log((cur.isHuman ? 'You' : 'The AI') + ' go first.');
+    g.log((cur.isHuman ? 'You go first.' : 'The AI goes first.'));
     try {
       while (g.turn < g.maxTurns) {
         st.handMode = null; st.pickSet = null;
@@ -424,40 +446,64 @@
     prompt(title + '. ' + msg, []);
   }
 
+  function gem(kind, value, dmg) {
+    const hurt = (kind === 'might' && dmg) ? ' hurt' : '';
+    const mark = (kind === 'might' && dmg) ? '<span class="dmg">' + dmg + '</span>' : '';
+    const title = kind === 'cost' ? 'Deploy' : (kind === 'might' ? 'Might' : (kind === 'life' ? 'Life' : 'Wage'));
+    return '<span class="gem ' + kind + hurt + '" title="' + title + '">' + value + mark + '</span>';
+  }
+  function artTag(card, cls) {
+    const u = artUrl(card);
+    if (!u) return '';
+    return '<img class="' + (cls || 'art') + '" alt="" src="' + u + '" onerror="this.style.display=\'none\'">';
+  }
+  function leaderText(card) {
+    return String((card && card.text) || '').replace(/Enter by end of turn 1\.\s*/i, '');
+  }
+
   function pills(p) {
     const G = st.game;
     const bill = G.wageBill(p);
     const inc = G.projIncome(p);
-    const coh = p.high ? 'High Cohesion' : 'Low Cohesion';
-    return '<span class="pill">Life ' + p.life + '</span>' +
-      '<span class="pill">Specie ' + p.specie + '</span>' +
-      '<span class="pill ' + (p.high ? 'hi' : 'lo') + '">' + coh + '</span>' +
-      '<span class="pill">Wages ' + bill + '</span>' +
+    const pulse = p.turnCount && p.turnCount % 3 === 0;
+    return '<span class="crystals">' +
+      '<span class="crystal" title="Specie">' + gem('cost', p.specie) + ' Specie</span>' +
+      '<span class="crystal wage-bill" title="Total wages this turn">' + gem('wage', bill) + ' Wages</span>' +
+      '</span>' +
       '<span class="pill">Income ' + inc + '</span>' +
-      (p.turnCount ? '<span class="pill">Turn ' + p.turnCount + '</span>' : '');
+      (p.turnCount ? '<span class="pill">Turn ' + p.turnCount + (pulse ? ' · Timefall' : '') + '</span>' : '');
   }
 
-  function chip(s, cls) {
+  function tokenSoul(s, cls) {
     const G = st.game;
     const m = G.might(s);
     const w = G.wageOf(s);
-    const aged = s.age ? ' Aged ' + s.age : '';
-    const dmg = s.dmg ? ' dmg ' + s.dmg : '';
-    const tok = s.token ? ' token' : '';
+    const card = s.card || s;
+    const aged = s.age ? '<div class="meta">Aged ' + s.age + (s.token ? ' · token' : '') + '</div>' : (s.token ? '<div class="meta">token</div>' : '');
     const ps = st.pickSet;
     let extra = '';
     if (ps && ps.type === 'damage' && ps.order) {
       const i = ps.order.indexOf(s);
-      if (i >= 0) extra = ' · #' + (i + 1);
+      if (i >= 0) extra = '<div class="meta">Assign #' + (i + 1) + '</div>';
     }
-    return '<button type="button" class="chip ' + (cls || '') + (s.tapped ? ' tapped' : '') + '" data-uid="' + s.uid + '">' +
-      '<span class="t">' + escapeHtml(shortName(s.name)) + '</span>' +
-      '<span class="m">Might ' + m + (w ? ' · Wage ' + w : '') + aged + dmg + tok + extra + '</span></button>';
+    return '<button type="button" class="token ' + (cls || '') + (s.tapped ? ' tapped' : '') + '" data-uid="' + s.uid + '">' +
+      artTag(card) +
+      '<span class="tn">' + escapeHtml(shortName(s.name)) + '</span>' +
+      '<div class="gems">' + gem('might', m, s.dmg || 0) + gem('wage', w || 0) + '</div>' +
+      aged + extra +
+      '</button>';
+  }
+  function tokenEcon(e) {
+    const w = (e.card && e.card.wage) || e.wage || 0;
+    return '<button type="button" class="token" data-card="' + escapeAttr(e.card.id) + '">' +
+      artTag(e.card) +
+      '<span class="tn">' + escapeHtml(shortName(e.name)) + '</span>' +
+      '<div class="gems">' + gem('wage', w) + '</div>' +
+      '<div class="meta">Economic</div></button>';
   }
 
   function lane(p, prefix) {
-    const econs = (p.econsL || []).map((e) =>
-      '<button type="button" class="chip" data-card="' + escapeAttr(e.card.id) + '"><span class="t">' + escapeHtml(shortName(e.name)) + '</span><span class="m">Econ</span></button>').join('');
+    const econs = (p.econsL || []).map(tokenEcon).join('');
     const souls = (p.souls || []).map((s) => {
       let cls = '';
       const ps = st.pickSet;
@@ -471,22 +517,72 @@
       if (ps && ps.type === 'missAge' && ps.cands.includes(s)) cls = (ps.cands[0] === s ? 'sel' : '');
       if (ps && ps.type === 'ageTarget' && ps.cands.includes(s)) cls = 'atk';
       if (ps && ps.type === 'damage' && ps.blockers.includes(s)) cls = (ps.order.includes(s) ? 'sel' : 'blk');
-      return chip(s, cls);
+      return tokenSoul(s, cls);
     }).join('');
     const el = prefix === 'ai' ? $('aiBoard') : $('myBoard');
-    el.innerHTML = '<div class="lane">' + econs + souls + (econs || souls ? '' : '<span class="sub">Empty board</span>') + '</div>';
+    const empty = !(econs || souls);
+    el.classList.toggle('empty', empty);
+    el.innerHTML = empty ? '' : '<div class="lane">' + econs + souls + '</div>';
   }
 
   function renderHand() {
-    const p = st.me, G = st.game;
+    const p = st.me;
     if (!p) return;
     $('hand').innerHTML = p.hand.map((c, i) => {
       const cost = costOf(p, c);
       const can = st.handMode && st.handMode.type === 'play' && canPlay(p, c);
-      const stats = c.type === 'Rite' ? ('Rite · ' + cost) : (c.type === 'Economic' ? ('Econ · ' + cost + (c.wage ? ' W' + c.wage : '')) : (cost + ' · M' + (c.might || 0) + ' W' + (c.wage || 0)));
-      const fac = c.set === 'Anu' ? ' anu' : (c.set === 'Colovian' ? ' col' : '');
-      return '<button type="button" class="card' + (can ? ' can' : '') + fac + '" data-hand="' + i + '"><div class="cn">' + escapeHtml(shortName(c.name)) + '</div><div class="cm">' + escapeHtml(stats) + '</div></button>';
+      const gems = [gem('cost', cost)];
+      if (c.might != null) gems.push(gem('might', c.might));
+      if (c.type !== 'Rite' && c.type !== 'Leader') gems.push(gem('wage', c.wage || 0));
+      return '<button type="button" class="card' + (can ? ' can' : '') + '" data-hand="' + i + '">' +
+        '<span class="cost-slot">' + gem('cost', cost) + '</span>' +
+        artTag(c) +
+        '<div class="body"><div class="cn">' + escapeHtml(shortName(c.name)) + '</div>' +
+        '<div class="gems">' + gems.slice(1).join('') + '</div>' +
+        '<div class="ct">' + linkKeywords(c.text || '') + '</div></div></button>';
     }).join('') || '<span class="sub">No cards in hand</span>';
+    bindKeywords($('hand'));
+  }
+
+  function renderLeader(slotId, p, who) {
+    const el = $(slotId);
+    if (!el || !p || !p.leaderCard) { if (el) el.innerHTML = ''; return; }
+    const c = p.leaderCard;
+    const coh = p.high ? 'high' : 'low';
+    el.innerHTML = '<button type="button" class="lcard" data-leader="' + who + '">' +
+      '<div class="portrait">' + artTag(c) +
+      '<span class="life-wrap" title="Life">' + gem('life', p.life) + '</span>' +
+      '<span class="rune ' + coh + '" title="Cohesion"><span class="rune-gem"></span><span class="rune-lab">' + (p.high ? 'High' : 'Low') + '</span></span>' +
+      '</div>' +
+      '<div class="body"><div class="cn">' + escapeHtml(shortName(c.name)) + '</div>' +
+      '<div class="ct">' + linkKeywords(leaderText(c)) + '</div></div></button>';
+    bindKeywords(el);
+  }
+
+  function formatLog(notes) {
+    const out = [];
+    for (const n of notes || []) {
+      if (/^T\d+\s+P\d+/.test(n)) continue;
+      let s = String(n).trim();
+      s = s.replace(/^P0 plays \S+\s+/, 'You play ');
+      s = s.replace(/^P1 plays \S+\s+/, 'AI plays ');
+      s = s.replace(/^\s*attack:\s*/, 'Attack: ');
+      if (s) out.push(s);
+    }
+    return out.slice(-3);
+  }
+
+  function pulseTimefall(g) {
+    const cur = g.players.find((p) => p.turnCount === g.turn) || st.me;
+    const on = !!(cur && cur.turnCount && cur.turnCount % 3 === 0);
+    const gameEl = $('game');
+    if (!on) { gameEl.classList.remove('timefall'); st._pulseFor = 0; return; }
+    const key = (cur.idx + ':' + cur.turnCount);
+    if (st._pulseFor === key) return;
+    st._pulseFor = key;
+    gameEl.classList.remove('timefall');
+    void gameEl.offsetWidth;
+    gameEl.classList.add('timefall');
   }
 
   function facLabel(p) {
@@ -505,16 +601,16 @@
     $('aiName').className = 'name ' + (ai.faction === 'Anu' ? 'anu' : 'col');
     $('meName').textContent = 'You · ' + facLabel(me);
     $('meName').className = 'name ' + (me.faction === 'Anu' ? 'anu' : 'col');
-    $('aiLeader').textContent = ai.leaderCard ? shortName(ai.leaderCard.name) : '';
-    $('meLeader').textContent = me.leaderCard ? shortName(me.leaderCard.name) : '';
     $('aiPills').innerHTML = pills(ai);
     $('mePills').innerHTML = pills(me);
+    renderLeader('aiLeaderSlot', ai, 'ai');
+    renderLeader('meLeaderSlot', me, 'me');
     lane(ai, 'ai');
     lane(me, 'my');
     renderHand();
-    const notes = (g.notes || []).slice(-8);
-    $('log').innerHTML = notes.map(escapeHtml).join('<br>');
+    $('log').innerHTML = formatLog(g.notes).map(escapeHtml).join('<br>');
     $('log').scrollTop = $('log').scrollHeight;
+    pulseTimefall(g);
   }
 
   function soulByUid(uid) {
@@ -609,8 +705,8 @@
       }
       openCard(s.card); return;
     }
-    if (e.target.closest('#aiLeader')) openCard(st.ai && st.ai.leaderCard);
-    if (e.target.closest('#meLeader')) openCard(st.me && st.me.leaderCard);
+    const lead = e.target.closest('[data-leader]');
+    if (lead) { openCard(lead.getAttribute('data-leader') === 'ai' ? (st.ai && st.ai.leaderCard) : (st.me && st.me.leaderCard)); return; }
   });
 
   /* ---------- deck builder ---------- */
@@ -789,7 +885,15 @@
   $('btnExport').addEventListener('click', () => openCodeModal('export'));
   $('btnImport').addEventListener('click', () => openCodeModal('import'));
 
-  fillLeaders();
-  fillDeckSelects(false);
-  DECK.loadStarters().then((list) => { starters = list || []; fillDeckSelects(true); });
+  try {
+    fillLeaders();
+    fillDeckSelects(false);
+    DECK.loadStarters().then((list) => { starters = list || []; fillDeckSelects(true); }).catch(function (err) {
+      if ($('setupErr')) $('setupErr').textContent = 'Could not load starter decks: ' + (err && err.message ? err.message : err);
+    });
+  } catch (err) {
+    var el = document.getElementById('setupErr');
+    if (el) el.textContent = 'Could not start the page: ' + (err && err.message ? err.message : err);
+    console.error(err);
+  }
 })();

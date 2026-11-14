@@ -301,6 +301,7 @@
       name: d.name || 'Starter',
       leaderId,
       counts: normalizeCounts(d.cards || d.counts),
+      plan: d.plan || d.oneLiner || '',
       starter: true
     };
   }

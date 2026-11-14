@@ -16,10 +16,10 @@
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);min-height:100%;min-height:100dvh}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);min-height:100%;min-height:100vh;min-height:100dvh;overflow-x:hidden;max-width:100%}
 body{background-image:radial-gradient(ellipse at top,#1c1812 0%,var(--bg) 55%)}
 button,select{font:inherit;color:inherit}
-.screen{display:none;min-height:100dvh;flex-direction:column}
+.screen{display:none;min-height:100vh;min-height:100dvh;flex-direction:column;min-width:0;width:100%}
 .screen.on{display:flex}
 h1{margin:0;font-size:1.35rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .sub{color:var(--muted);font-size:.85rem;margin:.35rem 0 1rem}
@@ -34,32 +34,95 @@ h1{margin:0;font-size:1.35rem;letter-spacing:.06em;text-transform:uppercase;colo
 .btn.wide{flex:1 1 100%}
 label.field{display:flex;flex-direction:column;gap:4px;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0}
 select, .field input{background:var(--elev);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:1rem;min-height:44px;color:var(--text)}
-/* game layout */
-#topbar,#youbar{padding:8px 12px;background:rgba(14,12,10,.92);border-bottom:1px solid var(--border)}
-#youbar{border-top:1px solid var(--border);border-bottom:0;padding-bottom:calc(8px + var(--safe-bottom))}
-.statline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.name{font-weight:700}.name.col{color:var(--colovian)}.name.anu{color:var(--anu)}
-.pills{display:flex;gap:6px;flex-wrap:wrap}
-.pill{background:var(--elev);border:1px solid var(--border);border-radius:999px;padding:4px 9px;font-size:.8rem}
-.pill.hi{color:var(--high)}.pill.lo{color:var(--low)}
-.board{padding:8px 10px;min-height:72px}
-.lane{display:flex;gap:6px;flex-wrap:wrap;min-height:28px}
-.chip{background:var(--elev2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;min-width:72px;max-width:46%;font-size:.78rem;box-shadow:var(--shadow)}
-.chip.tapped{opacity:.65}
-.chip.atk{outline:2px solid var(--anu)}
-.chip.blk{outline:2px solid var(--colovian)}
-.chip.sel{outline:2px solid var(--accent)}
-.chip .t{font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chip .m{color:var(--muted);font-size:.72rem}
-#log{font-size:.78rem;color:var(--muted);padding:4px 12px;max-height:4.6em;overflow:auto;line-height:1.35;background:#120f0c}
-#prompt{padding:8px 12px;background:var(--elev);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-#prompt .q{font-weight:700;margin:0 0 8px;font-size:.95rem}
-#hand{display:flex;gap:8px;overflow-x:auto;padding:8px 12px 4px;-webkit-overflow-scrolling:touch}
-.card{flex:0 0 108px;background:var(--elev2);border:1px solid var(--border);border-radius:12px;padding:8px;min-height:96px;box-shadow:var(--shadow)}
-.card.can{outline:2px solid var(--accent)}
-.card .cn{font-weight:700;font-size:.78rem;line-height:1.2;max-height:2.4em;overflow:hidden}
-.card .cm{color:var(--muted);font-size:.72rem;margin-top:4px}
-.bar-acts{display:flex;gap:8px;padding:8px 12px 0}
+/* game layout — syphas glass, yellow-green veins, never blue */
+#game.screen.on{
+  position:relative;
+  height:100vh;height:100svh;max-height:100vh;max-height:100svh;overflow:hidden;
+  background-color:#050505;
+  background-image:
+    radial-gradient(ellipse at 18% 22%, rgba(210,240,70,.10), transparent 42%),
+    radial-gradient(ellipse at 82% 78%, rgba(190,220,50,.08), transparent 46%),
+    radial-gradient(ellipse at 50% 50%, rgba(20,20,16,.3), #050505 70%),
+    repeating-linear-gradient(118deg, transparent 0 36px, rgba(200,230,60,.04) 37px, rgba(220,255,90,.14) 38px, rgba(160,190,40,.05) 39px, transparent 41px, transparent 88px),
+    repeating-linear-gradient(62deg, transparent 0 52px, rgba(180,210,50,.03) 53px, rgba(210,245,80,.11) 54px, transparent 56px, transparent 120px);
+  background-size:100% 100%,100% 100%,100% 100%, 220px 220px, 280px 280px;
+}
+#pulse{pointer-events:none;position:absolute;inset:0;z-index:8;display:none;
+  background:linear-gradient(105deg, transparent 20%, rgba(200,240,70,.0) 38%, rgba(220,255,100,.28) 50%, rgba(180,220,50,.0) 62%, transparent 80%)}
+#game.timefall #pulse{display:block;animation:syphasPulse 1.15s ease-out 1}
+@keyframes syphasPulse{
+  0%{opacity:0;transform:translateX(-30%)}
+  25%{opacity:1}
+  100%{opacity:0;transform:translateX(30%)}
+}
+#table{flex:0 0 auto;min-height:0;min-width:0;overflow:visible}
+#topbar,#youbar{padding:6px 10px;background:rgba(8,8,6,.82);border-bottom:1px solid rgba(200,230,70,.18);flex:0 0 auto;backdrop-filter:blur(6px)}
+#youbar{border-top:1px solid rgba(200,230,70,.18);border-bottom:0;padding-bottom:6px}
+.statline{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:nowrap}
+.name{font-weight:700;white-space:nowrap;flex:0 0 auto}.name.col{color:#d7c27a}.name.anu{color:#e0c56a}
+.pills{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;min-width:0;overflow:auto}
+.pill{background:rgba(20,18,12,.8);border:1px solid rgba(200,230,70,.22);border-radius:999px;padding:4px 9px;font-size:.8rem}
+.crystals{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.crystal{display:inline-flex;align-items:center;gap:5px;background:rgba(20,18,12,.8);border:1px solid rgba(201,162,39,.45);border-radius:999px;padding:3px 9px 3px 4px;font-size:.8rem;font-weight:700}
+.crystal .gem{width:22px;height:22px;font-size:.68rem}
+.crystal.wage-bill{border-color:rgba(200,140,50,.5)}
+.side-row{display:flex;gap:8px;align-items:stretch;padding:4px 8px;min-width:0;flex:0 0 auto}
+.leader-slot{flex:0 0 136px;min-width:0}
+.side-row .board{flex:1;min-width:0}
+.board{padding:4px 6px;min-height:0}
+.board.empty{padding:0;min-height:0}
+.lane{display:flex;gap:6px;flex-wrap:wrap}
+/* gems: cost / might / wage — never health or attack */
+.gem{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-weight:800;font-size:.72rem;line-height:1;position:relative;
+  box-shadow:0 0 0 1px rgba(0,0,0,.65),0 2px 5px rgba(0,0,0,.55)}
+.gem.cost{background:radial-gradient(circle at 35% 30%,#f3e08a,#c9a227 58%,#5a450c);color:#1a1408}
+.gem.might{background:radial-gradient(circle at 35% 30%,#e8f79a,#8ea32c 55%,#2a320c);color:#f7f4dc}
+.gem.might.hurt{box-shadow:0 0 0 2px #c43333,0 0 8px rgba(220,50,50,.65),0 2px 5px rgba(0,0,0,.55)}
+.gem .dmg{position:absolute;top:-7px;right:-7px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:#b01c1c;color:#fff;font-size:.58rem;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px #4a0000}
+.gem.wage{background:radial-gradient(circle at 35% 30%,#f0d2a0,#b06a28 58%,#4a2a0c);color:#1a1208}
+.gem.life{background:radial-gradient(circle at 35% 30%,#f0c070,#a84820 55%,#4a1808);color:#fff8e8;width:30px;height:30px;font-size:.8rem}
+/* board tokens */
+.token{position:relative;background:rgba(18,16,12,.88);border:1px solid rgba(200,230,70,.28);border-radius:12px;padding:0;min-width:86px;max-width:48%;overflow:hidden;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none}
+.token.tapped{opacity:.65}
+.token.atk{outline:2px solid #c9a227}
+.token.blk{outline:2px solid #d7c27a}
+.token.sel{outline:2px solid #e8f56a}
+.token .art{display:block;width:100%;height:54px;object-fit:cover;background:#000}
+.token .tn{display:block;font-weight:700;font-size:.72rem;padding:4px 6px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.token .gems{display:flex;gap:4px;align-items:center;padding:3px 6px 6px}
+.token .meta{color:var(--muted);font-size:.62rem;padding:0 6px 4px}
+#log{font-size:.75rem;color:var(--muted);padding:2px 10px;max-height:2.5em;overflow:auto;line-height:1.3;flex:0 0 auto}
+#log:empty{display:none}
+#prompt{padding:6px 10px;background:rgba(12,12,8,.9);border-top:1px solid rgba(200,230,70,.22);border-bottom:1px solid rgba(200,230,70,.22);flex:0 0 auto}
+#prompt .q{font-weight:700;margin:0 0 6px;font-size:.88rem}
+#handWrap{flex:1 1 auto;min-width:0;min-height:0;width:100%;overflow:hidden;border-top:1px solid rgba(200,230,70,.22);background:rgba(8,8,6,.92)}
+#hand{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:6px 16px 8px;width:100%;max-width:100%;min-width:0;min-height:0;max-height:100%;height:100%;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scrollbar-width:thin}
+#hand::-webkit-scrollbar{height:6px}
+#hand::-webkit-scrollbar-thumb{background:#c9e84a;border-radius:4px}
+.card{flex:0 0 146px;width:146px;background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.3);border-radius:12px;padding:0;min-height:0;box-shadow:0 6px 16px rgba(0,0,0,.55);text-align:left;overflow:hidden;scroll-snap-align:start;position:relative;-webkit-appearance:none;appearance:none}
+.card.can{outline:2px solid #e8f56a}
+.card .art{display:block;width:100%;height:68px;object-fit:cover;background:#000;border:0}
+.card .body{padding:7px 8px 8px}
+.card .cn{font-weight:700;font-size:.82rem;line-height:1.2;max-height:2.4em;overflow:hidden}
+.card .gems{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 4px;align-items:center}
+.card .ct{color:var(--text);font-size:.64rem;line-height:1.3;max-height:2.7em;overflow:auto;white-space:pre-wrap}
+.card .cost-slot{position:absolute;top:6px;left:6px;z-index:2}
+.lcard{width:100%;background:rgba(16,14,10,.95);border:1px solid rgba(200,230,70,.4);border-radius:12px;padding:0;overflow:hidden;text-align:left;box-shadow:0 6px 16px rgba(0,0,0,.55);-webkit-appearance:none;appearance:none}
+.lcard .portrait{position:relative}
+.lcard .art{display:block;width:100%;height:64px;object-fit:cover;background:#000}
+.lcard .life-wrap{position:absolute;left:6px;bottom:6px}
+.lcard .rune{position:absolute;right:6px;bottom:6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.rune-gem{width:22px;height:22px;border-radius:4px;transform:rotate(45deg);
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.5)}
+.rune.high .rune-gem{background:radial-gradient(circle at 35% 30%,#f3ff9a,#b8d94a 55%,#3a4a10);box-shadow:0 0 10px rgba(210,240,70,.85),0 0 0 1px #8faa2a}
+.rune.low .rune-gem{background:radial-gradient(circle at 35% 30%,#3a3a30,#1a1a14 70%,#0a0a08);box-shadow:0 0 0 1px #2a2a22;opacity:.7}
+.rune-lab{font-size:.58rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.rune.high .rune-lab{color:#d8f070}
+.rune.low .rune-lab{color:#7a7460}
+.lcard .body{padding:6px 7px 8px}
+.lcard .cn{font-weight:700;font-size:.76rem;line-height:1.2;color:#e8f56a}
+.lcard .ct{font-size:.62rem;line-height:1.25;color:var(--text);max-height:2.6em;overflow:auto;white-space:pre-wrap}
+.bar-acts{display:flex;gap:6px;padding:0;align-items:center}
 /* modal */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;padding:18px 12px calc(18px + var(--safe-bottom));overflow:auto}
 .modal.on{display:block}
@@ -73,7 +136,7 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 #endbox .big{font-size:1.6rem;color:var(--accent);margin:0 0 8px}
 
 .btn.danger{border-color:#7a3030;color:#f0c8c8}
-.btn.small{padding:8px 10px;min-height:40px;font-size:.85rem}
+.btn.small{padding:6px 8px;min-height:32px;font-size:.8rem;flex:0 0 auto}
 #setupErr{color:#e08880;font-size:.9rem;margin:.6rem 0 0;min-height:1.2em}
 /* builder */
 #builder{background:var(--bg)}
@@ -113,9 +176,11 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
   <label class="field">Your deck
     <select id="myDeckSel"></select>
   </label>
+  <p class="sub" id="myDeckPlan" style="margin-top:-6px"></p>
   <label class="field">AI deck
     <select id="aiDeckSel"></select>
   </label>
+  <p class="sub" id="aiDeckPlan" style="margin-top:-6px"></p>
   <p id="setupErr"></p>
   <button class="btn primary wide" type="button" id="btnStart">Start game</button>
   <button class="btn wide" type="button" id="btnBuilder">Deck Builder</button>
@@ -182,25 +247,36 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
 </div>
 
 <div id="game" class="screen">
-  <div id="topbar">
-    <div class="statline">
-      <div><span class="name" id="aiName">AI</span><div id="aiLeader" style="font-size:.75rem;color:var(--muted)"></div></div>
-      <div class="pills" id="aiPills"></div>
+  <div id="pulse" aria-hidden="true"></div>
+  <div id="table">
+    <div id="topbar">
+      <div class="statline">
+        <div><span class="name" id="aiName">AI</span></div>
+        <div class="pills" id="aiPills"></div>
+      </div>
+    </div>
+    <div class="side-row" id="aiRow">
+      <div class="leader-slot" id="aiLeaderSlot"></div>
+      <div class="board empty" id="aiBoard"></div>
+    </div>
+    <div id="log"></div>
+    <div id="prompt"><div class="q" id="promptQ">Waiting…</div><div class="row" id="promptActs"></div></div>
+    <div class="side-row" id="myRow">
+      <div class="leader-slot" id="meLeaderSlot"></div>
+      <div class="board empty" id="myBoard"></div>
     </div>
   </div>
-  <div class="board" id="aiBoard"></div>
-  <div id="log"></div>
-  <div id="prompt"><div class="q" id="promptQ">Waiting…</div><div class="row" id="promptActs"></div></div>
-  <div class="board" id="myBoard"></div>
-  <div id="hand"></div>
+  <div id="handWrap">
+    <div id="hand"></div>
+  </div>
   <div id="youbar">
     <div class="statline">
-      <div><span class="name" id="meName">You</span><div id="meLeader" style="font-size:.75rem;color:var(--muted)"></div></div>
+      <div><span class="name" id="meName">You</span></div>
       <div class="pills" id="mePills"></div>
-    </div>
-    <div class="bar-acts">
-      <button class="btn" type="button" id="btnRules">Rules</button>
-      <button class="btn" type="button" id="btnNew" style="display:none">New game</button>
+      <div class="bar-acts">
+        <button class="btn small" type="button" id="btnRules">Rules</button>
+        <button class="btn small" type="button" id="btnNew" style="display:none">New game</button>
+      </div>
     </div>
   </div>
 </div>
@@ -212,10 +288,10 @@ textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px soli
 
 <div id="tip"></div>
 
-<script src="play/cards.js?v=20261114tdeck"></script>
-<script src="play/rules.js?v=20261114tdeck"></script>
-<script src="play/engine.js?v=20261114tdeck"></script>
-<script src="play/deck.js?v=20261114tdeck"></script>
-<script src="play/app.js?v=20261114tdeck"></script>
+<script src="play/cards.js?v=20261114tsyphas"></script>
+<script src="play/rules.js?v=20261114tsyphas"></script>
+<script src="play/engine.js?v=20261114tsyphas"></script>
+<script src="play/deck.js?v=20261114tsyphas"></script>
+<script src="play/app.js?v=20261114tsyphas"></script>
 </body>
 </html>
