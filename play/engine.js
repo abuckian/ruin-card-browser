@@ -968,7 +968,7 @@ class Game {
     this.notes = []; this.chooser = opts.chooser || null;
     const _log = opts.log; this.log = (m) => { this.notes.push(String(m)); if (typeof _log === 'function') _log(m); else if (_log) console.log(m); };
     this.players = [deckA, deckB].map((d, i) => ({
-      idx: i, aiMode: d.aiMode || 'greedy', faction: d.faction, leaderCard: d.leader, deck: rng.shuffle(d.cards.slice()), hand: [], souls: [], econsL: [], leader: null,
+      idx: i, aiMode: d.aiMode || 'greedy', faction: d.faction || (d.leader && d.leader.set) || 'Colovian', leaderCard: d.leader, deck: rng.shuffle(d.cards.slice()), hand: [], souls: [], econsL: [], leader: null,
       martyrs: [], life: 25, specie: 0, high: true, highLast: true, missedLast: false, missedEver: false, turnCount: 0, canopy: 0,
       bdDiscount: 0, wageTax: 0, missPunish: 0, skipBase: false, ritesThisTurn: 0, stoleThisTurn: false, duneAgedThisTurn: false,
       riteDiscountTurn: 0, freeRite: 0, freeMartials: 0, nextIncomeBonus: 0, nextMartialBonus: 0, prevented: 0, paidThisTurn: false,
@@ -1477,9 +1477,18 @@ class Game {
         involvedAll.push([a, ...bs]);
         continue;
       }
-      // attacker assigns damage to kill most valuable blockers first
+      // attacker assigns damage (human may pick order when several blockers gang up)
       let dmg = M.get(a);
-      const order = bs.slice().sort((x, y) => (y.deploy + M.get(y)) - (x.deploy + M.get(x)));
+      let order = bs.slice().sort((x, y) => (y.deploy + M.get(y)) - (x.deploy + M.get(x)));
+      if (p.isHuman && this.chooser && this.chooser.pickDamage && bs.length > 1) {
+        const picked = await this.chooser.pickDamage(this, p, a, bs.slice(), dmg);
+        if (picked && picked.length) {
+          const seen = new Set();
+          order = [];
+          for (const s of picked) if (bs.includes(s) && !seen.has(s)) { seen.add(s); order.push(s); }
+          for (const s of bs) if (!seen.has(s)) order.push(s);
+        }
+      }
       for (const b of order) {
         let need = M.get(b) + (this.permFlag(b, 'dr1') ? 1 : 0);
         if (dmg >= need) { this.applyCombatDmg(b, need); dmg -= need; }

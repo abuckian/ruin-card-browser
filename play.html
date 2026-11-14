@@ -71,22 +71,114 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 #tip{position:fixed;z-index:50;max-width:260px;background:#2a2318;color:var(--text);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:.85rem;box-shadow:var(--shadow);display:none}
 #endbox{text-align:center;padding:24px 12px}
 #endbox .big{font-size:1.6rem;color:var(--accent);margin:0 0 8px}
+
+.btn.danger{border-color:#7a3030;color:#f0c8c8}
+.btn.small{padding:8px 10px;min-height:40px;font-size:.85rem}
+#setupErr{color:#e08880;font-size:.9rem;margin:.6rem 0 0;min-height:1.2em}
+/* builder */
+#builder{background:var(--bg)}
+#builder .btop{position:sticky;top:0;z-index:5;background:rgba(14,12,10,.96);border-bottom:1px solid var(--border);padding:10px 12px 8px}
+#builder .sum{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:flex-end}
+.curve{display:flex;gap:4px;align-items:flex-end;height:48px;flex:1}
+.curve .bar{flex:1;background:var(--elev2);border:1px solid var(--border);border-radius:4px 4px 0 0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:22px;overflow:hidden}
+.curve .bar i{display:block;width:100%;background:var(--accent);min-height:2px}
+.curve .bar span{font-size:.62rem;color:var(--muted);padding:1px 0}
+#dlist{padding:0 0 calc(88px + var(--safe-bottom))}
+.drow{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border)}
+.drow .dinfo{flex:1;text-align:left;background:transparent;border:0;padding:4px 0;min-height:44px;color:inherit}
+.drow .dn{font-weight:700;font-size:.88rem;display:block}
+.drow .dm{color:var(--muted);font-size:.72rem}
+.drow .dinfo.anu .dn{color:#f3d4c4}
+.drow .dinfo.col .dn{color:#dbe7f4}
+.pm{appearance:none;background:var(--elev2);border:1px solid var(--border);border-radius:10px;width:44px;height:44px;font-size:1.25rem;font-weight:700;flex:0 0 44px}
+.dcount{min-width:1.4em;text-align:center;font-weight:700}
+.drow.in{background:#1e1a14}
+#builder .stickyacts{position:sticky;bottom:0;background:rgba(14,12,10,.96);border-top:1px solid var(--border);padding:8px 12px calc(10px + var(--safe-bottom));z-index:5}
+.filt{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.filt .btn{padding:8px 10px;min-height:38px;font-size:.8rem}
+.filt .btn.picked{outline:2px solid var(--accent)}
+.search{width:100%;background:var(--elev);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:1rem;min-height:44px;color:var(--text)}
+.savedrow{display:flex;flex-direction:column;gap:4px;background:var(--elev);border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
+.savedrow .sn{font-weight:700}
+textarea.code{width:100%;min-height:120px;background:var(--elev);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:ui-monospace,Menlo,monospace;font-size:.8rem}
 </style>
 </head>
 <body>
 <div id="setup" class="screen on pad">
   <h1>RUIN</h1>
-  <p class="sub">Play against the AI. Round five build (t): base income 2, missed wages Age your highest Wage Soul.</p>
-  <p style="margin:0 0 6px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Your faction</p>
-  <div class="row" id="factionRow">
-    <button class="btn col picked" type="button" data-fac="Colovian">Colovian</button>
-    <button class="btn anu" type="button" data-fac="Anu">Anu</button>
-  </div>
+  <p class="sub">Play against the AI. Round five build (t): base income 2, missed wages Age your highest Wage Soul. Decks may mix Colovian and Anu cards.</p>
   <label class="field">Your Leader
     <select id="leaderSel"></select>
   </label>
+  <label class="field">Your deck
+    <select id="myDeckSel"></select>
+  </label>
+  <label class="field">AI deck
+    <select id="aiDeckSel"></select>
+  </label>
+  <p id="setupErr"></p>
   <button class="btn primary wide" type="button" id="btnStart">Start game</button>
+  <button class="btn wide" type="button" id="btnBuilder">Deck Builder</button>
   <button class="btn wide" type="button" id="btnRulesSetup">Rules</button>
+</div>
+
+<div id="builder" class="screen">
+  <div class="btop">
+    <div class="statline">
+      <h1 style="font-size:1.05rem">Deck Builder</h1>
+      <button class="btn small" type="button" id="btnBuilderBack">Back</button>
+    </div>
+    <label class="field">Deck name
+      <input class="search" id="deckName" type="text" maxlength="60" placeholder="Name this deck" />
+    </label>
+    <label class="field">Leader
+      <select id="builderLeader"></select>
+    </label>
+    <div class="sum">
+      <div class="pill" id="deckCount">0/60</div>
+      <div class="pill" id="deckTypes">—</div>
+      <div class="pill" id="deckSets">—</div>
+    </div>
+    <div class="curve" id="deckCurve"></div>
+    <p id="builderErr" class="sub" style="color:#e08880;margin:6px 0 0"></p>
+    <input class="search" id="cardSearch" type="search" placeholder="Search by name" enterkeyhint="search" />
+    <div class="filt" id="facFilt">
+      <button class="btn" type="button" data-fac="Leader">Leader's faction</button>
+      <button class="btn" type="button" data-fac="All">All</button>
+      <button class="btn" type="button" data-fac="Colovian">Colovian</button>
+      <button class="btn" type="button" data-fac="Anu">Anu</button>
+    </div>
+    <div class="filt" id="typeFilt">
+      <button class="btn picked" type="button" data-type="">All types</button>
+      <button class="btn" type="button" data-type="Martial">Martialus</button>
+      <button class="btn" type="button" data-type="Economic">Economic</button>
+      <button class="btn" type="button" data-type="Rite">Rite</button>
+    </div>
+    <div class="filt" id="costFilt">
+      <button class="btn picked" type="button" data-cost="">Any Deploy</button>
+      <button class="btn" type="button" data-cost="0">0</button>
+      <button class="btn" type="button" data-cost="1">1</button>
+      <button class="btn" type="button" data-cost="2">2</button>
+      <button class="btn" type="button" data-cost="3">3</button>
+      <button class="btn" type="button" data-cost="4">4</button>
+      <button class="btn" type="button" data-cost="5">5+</button>
+    </div>
+  </div>
+  <div id="dlist"></div>
+  <div class="pad" id="savedWrap" style="padding-top:8px;padding-bottom:calc(96px + var(--safe-bottom))">
+    <p class="sub" style="margin-top:0">Saved decks</p>
+    <div id="savedList"></div>
+  </div>
+  <div class="stickyacts">
+    <div class="row">
+      <button class="btn primary" type="button" id="btnAuto">Auto-fill to 60</button>
+      <button class="btn" type="button" id="btnSaveDeck">Save</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn" type="button" id="btnExport">Export code</button>
+      <button class="btn" type="button" id="btnImport">Import code</button>
+    </div>
+  </div>
 </div>
 
 <div id="game" class="screen">
@@ -116,11 +208,14 @@ select, .field input{background:var(--elev);border:1px solid var(--border);borde
 <div id="cardModal" class="modal" role="dialog"><div class="sheet" id="cardSheet"></div></div>
 <div id="rulesModal" class="modal" role="dialog"><div class="sheet" id="rulesSheet"></div></div>
 <div id="endModal" class="modal"><div class="sheet" id="endbox"></div></div>
+<div id="codeModal" class="modal" role="dialog"><div class="sheet" id="codeSheet"></div></div>
+
 <div id="tip"></div>
 
-<script src="play/cards.js?v=20261114tplay"></script>
-<script src="play/rules.js?v=20261114tplay"></script>
-<script src="play/engine.js?v=20261114tplay"></script>
-<script src="play/app.js?v=20261114tplay"></script>
+<script src="play/cards.js?v=20261114tdeck"></script>
+<script src="play/rules.js?v=20261114tdeck"></script>
+<script src="play/engine.js?v=20261114tdeck"></script>
+<script src="play/deck.js?v=20261114tdeck"></script>
+<script src="play/app.js?v=20261114tdeck"></script>
 </body>
 </html>
